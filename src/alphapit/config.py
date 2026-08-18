@@ -57,11 +57,13 @@ class AlphaPitSettings(BaseSettings):
     rcsb_base_url: str = "https://files.rcsb.org/download"
     alphafold_base_url: str = "https://alphafold.ebi.ac.uk/files"
 
-    # Streaming and Network Parameters
-    download_chunk_size: int = 64 * 1024  # 64 KB chunks
-    download_timeout_seconds: float = 30.0
-    download_max_retries: int = 3
-    download_concurrency: int = 8
+    # Power & Thermal Safety Profile
+    # Options: 'cool_quiet' (2 workers, high pacing), 'balanced' (4 workers, gentle pacing), 'turbo' (8 workers)
+    power_profile: str = "balanced"
+    max_workers: int = 4
+    throttle_sleep_ms: float = 15.0  # gentle inter-item cooldown
+    gc_interval_structures: int = 25  # force memory reclamation every N structures
+    shard_size_structures: int = 500  # write to disk shard and free RAM every N structures
 
     # dMaSIF Molecular Surface & Geometry Parameters
     surface_resolution: float = 1.0  # Angstroms grid resolution
