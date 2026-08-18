@@ -1,11 +1,14 @@
 """
 End-to-end AlphaPit pipeline orchestrating concurrent streaming download, live metadata fetching,
-geometry generation, dMaSIF neural inference, and PithosDB vector index compilation.
+geometry generation, dMaSIF neural inference, sharded storage, and thermal-safe resource management.
 """
 
 from __future__ import annotations
 
 import asyncio
+import gc
+import json
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -30,11 +33,12 @@ from alphapit.storage.adapter import (
 
 @dataclass
 class PipelineMetrics:
-    """Real-time performance and throughput metrics."""
+    """Real-time performance, throughput, and thermal metrics."""
     total_structures_attempted: int = 0
     total_structures_succeeded: int = 0
     total_surface_patches: int = 0
     total_network_bytes: int = 0
+    total_shards_written: int = 0
     start_time: float = field(default_factory=time.perf_counter)
     end_time: float = 0.0
 
@@ -58,7 +62,8 @@ class PipelineMetrics:
 
 class AlphaPitPipeline:
     """
-    Unified high-level pipeline for streaming protein structures to Pithos vector database.
+    Unified high-level pipeline for streaming protein structures to Pithos vector database
+    with thermal pacing, automatic sharding, and checkpoint resume capability.
     """
 
     def __init__(
@@ -68,15 +73,24 @@ class AlphaPitPipeline:
         model: Optional[dMaSIFNet] = None,
         storage_adapter: Optional[PithosStorageAdapter] = None,
         device: Optional[str] = None,
-        concurrency: int = 16,
+        concurrency: int = 4,
+        throttle_sleep_ms: float = 15.0,
     ) -> None:
         self.device = device or ("mps" if torch.backends.mps.is_available() else "cpu")
+        self.concurrency = concurrency
+        self.throttle_sleep_ms = throttle_sleep_ms
         self.downloader = downloader or PDBStreamDownloader(concurrency_limit=concurrency)
         self.feature_extractor = feature_extractor or SurfaceFeatureExtractor()
         self.model = (model or dMaSIFNet()).to(self.device)
         self.model.eval()
         self.storage = storage_adapter or PithosStorageAdapter()
-        self.concurrency = concurrency
+
+    def _apply_thermal_governor(self) -> None:
+        """Lower CPU priority slightly so system and UI remain 100% responsive."""
+        try:
+            os.nice(4)
+        except Exception:
+            pass
 
     async def stream_and_process_structure(
         self,
@@ -154,7 +168,7 @@ class AlphaPitPipeline:
             for i in range(p):
                 metadata_records.append(
                     SurfaceVectorRecord(
-                        record_id=0,  # will be assigned during aggregation
+                        record_id=0,
                         structure_id=meta.uniprot_accession,
                         chain_id="A",
                         res_seq=int(res_seqs[i]),
@@ -163,47 +177,130 @@ class AlphaPitPipeline:
                     )
                 )
 
+            # Thermal cooldown
+            if self.throttle_sleep_ms > 0:
+                await asyncio.sleep(self.throttle_sleep_ms / 1000.0)
+
             return embs, metadata_records
         except Exception:
             return None
+
+    def _load_checkpoint(self, checkpoint_file: Path) -> Set[str]:
+        """Load already processed UniProt accessions."""
+        if checkpoint_file.exists():
+            try:
+                with open(checkpoint_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return set(data.get("processed_ids", []))
+            except Exception:
+                return set()
+        return set()
+
+    def _save_checkpoint(self, checkpoint_file: Path, processed_ids: Set[str]) -> None:
+        """Persist processed UniProt accessions to SSD."""
+        try:
+            checkpoint_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(checkpoint_file, "w", encoding="utf-8") as f:
+                json.dump({"processed_ids": list(processed_ids)}, f)
+        except Exception:
+            pass
 
     async def stream_and_index_proteome(
         self,
         index_name: str,
         organism_tax_id: str = "9606",  # Homo sapiens
-        limit: int = 50,
+        limit: Optional[int] = None,
         min_plddt: float = 70.0,
+        shard_size: int = 500,
         concurrency: Optional[int] = None,
         show_progress: bool = True,
-    ) -> Tuple[Path, PipelineMetrics]:
+    ) -> Tuple[List[Path], PipelineMetrics]:
         """
-        Highly concurrent proteome streaming pipeline.
-        Pulls live UniProt / AlphaFold metadata and processes items through an async worker pool.
+        Production-grade proteome streaming pipeline with automatic SSD sharding,
+        checkpoint resume, and thermal pacing.
         """
+        self._apply_thermal_governor()
         num_workers = concurrency or self.concurrency
         metrics = PipelineMetrics()
         metrics.start_time = time.perf_counter()
 
-        queue: asyncio.Queue[Optional[AlphaFoldMetadata]] = asyncio.Queue(maxsize=num_workers * 4)
-        results: List[Tuple[np.ndarray, List[SurfaceVectorRecord]]] = []
+        checkpoint_file = settings.full_index_path / f"{index_name}_checkpoint.json"
+        processed_ids = self._load_checkpoint(checkpoint_file)
 
-        pbar = tqdm(total=limit, desc="Streaming AlphaFold Proteome", disable=not show_progress)
+        queue: asyncio.Queue[Optional[AlphaFoldMetadata]] = asyncio.Queue(maxsize=num_workers * 2)
+        current_shard_embeddings: List[np.ndarray] = []
+        current_shard_metadata: List[SurfaceVectorRecord] = []
+        shard_paths: List[Path] = []
+        shard_idx = len(list(settings.full_index_path.glob(f"{index_name}_shard_*.pithos"))) + 1
+        global_rec_id = 0
+        structures_in_current_shard = 0
+
+        pbar = tqdm(total=limit, desc="Streaming Proteome", disable=not show_progress)
+
+        def flush_shard():
+            nonlocal structures_in_current_shard, shard_idx, global_rec_id
+            if not current_shard_embeddings:
+                return
+
+            shard_name = f"{index_name}_shard_{shard_idx:04d}"
+            combined = np.vstack(current_shard_embeddings)
+
+            # Assign contiguous record IDs
+            indexed_meta = []
+            rec_offset = 0
+            for meta_rec in current_shard_metadata:
+                meta_rec.record_id = rec_offset
+                indexed_meta.append(meta_rec)
+                rec_offset += 1
+
+            shard_path = self.storage.compile_index(
+                index_name=shard_name,
+                embeddings=combined,
+                metadata=indexed_meta,
+            )
+            shard_paths.append(shard_path)
+            metrics.total_shards_written += 1
+            shard_idx += 1
+
+            # Clear memory immediately
+            current_shard_embeddings.clear()
+            current_shard_metadata.clear()
+            structures_in_current_shard = 0
+
+            # Force garbage collection & MPS cache release
+            if torch.backends.mps.is_available():
+                torch.mps.empty_cache()
+            gc.collect()
 
         async def worker():
+            nonlocal structures_in_current_shard
             while True:
                 item = await queue.get()
                 if item is None:
                     queue.task_done()
                     break
 
+                if item.uniprot_accession in processed_ids:
+                    pbar.update(1)
+                    queue.task_done()
+                    continue
+
                 res = await self.process_single_metadata_item(item, min_plddt=min_plddt)
                 if res is not None:
                     embs, meta_list = res
-                    results.append((embs, meta_list))
+                    current_shard_embeddings.append(embs)
+                    current_shard_metadata.extend(meta_list)
+                    processed_ids.add(item.uniprot_accession)
+                    structures_in_current_shard += 1
                     metrics.total_structures_succeeded += 1
                     metrics.total_surface_patches += embs.shape[0]
-                    # Estimate network payload size (~100KB per compressed structure)
                     metrics.total_network_bytes += 100 * 1024
+
+                    # Periodic memory cleanup & shard flushing
+                    if structures_in_current_shard >= shard_size:
+                        flush_shard()
+                        self._save_checkpoint(checkpoint_file, processed_ids)
+
                 pbar.update(1)
                 queue.task_done()
 
@@ -218,42 +315,23 @@ class AlphaPitPipeline:
             metrics.total_structures_attempted += 1
             await queue.put(meta)
             produced_count += 1
-            if produced_count >= limit:
+            if limit and produced_count >= limit:
                 break
 
-        # Send poison pills to stop workers
+        # Stop workers
         for _ in range(num_workers):
             await queue.put(None)
 
         await asyncio.gather(*worker_tasks)
         pbar.close()
 
-        if not results:
-            raise RuntimeError("No structures were successfully processed.")
-
-        # Aggregate embeddings and assign globally unique record IDs
-        all_embeddings: List[np.ndarray] = []
-        all_metadata: List[SurfaceVectorRecord] = []
-        global_rec_id = 0
-
-        for embs, meta_list in results:
-            for rec in meta_list:
-                rec.record_id = global_rec_id
-                all_metadata.append(rec)
-                global_rec_id += 1
-            all_embeddings.append(embs)
-
-        combined_records = np.vstack(all_embeddings)
-
-        # Compile single-file .pithos container
-        index_path = self.storage.compile_index(
-            index_name=index_name,
-            embeddings=combined_records,
-            metadata=all_metadata,
-        )
+        # Flush any remaining items in the buffer
+        if current_shard_embeddings:
+            flush_shard()
+            self._save_checkpoint(checkpoint_file, processed_ids)
 
         metrics.end_time = time.perf_counter()
-        return index_path, metrics
+        return shard_paths, metrics
 
     async def index_structures(
         self,

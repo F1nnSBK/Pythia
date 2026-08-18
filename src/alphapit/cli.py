@@ -104,22 +104,35 @@ def cmd_search(args: argparse.Namespace) -> None:
 
 
 async def _run_benchmark(args: argparse.Namespace) -> None:
-    pipeline = AlphaPitPipeline(concurrency=args.concurrency)
-    print("=== AlphaPit Live Concurrent Proteome Benchmark ===")
-    print(f"Organism Tax ID:    {args.organism} (9606 = Homo sapiens)")
-    print(f"Target Structures:  {args.limit}")
-    print(f"Worker Concurrency: {args.concurrency} async workers")
-    print(f"pLDDT Quality Gate: >= {args.min_plddt}")
-    print(f"Target Storage:     {settings.full_index_path}")
-    print("---------------------------------------------------")
+    # Set power and thermal profile
+    if args.profile == "cool_quiet":
+        workers = 2
+        throttle_ms = 40.0
+    elif args.profile == "turbo":
+        workers = 8
+        throttle_ms = 0.0
+    else:  # balanced
+        workers = args.concurrency or 4
+        throttle_ms = 15.0
 
-    index_name = f"benchmark_org_{args.organism}_{args.limit}"
-    index_path, metrics = await pipeline.stream_and_index_proteome(
+    pipeline = AlphaPitPipeline(concurrency=workers, throttle_sleep_ms=throttle_ms)
+    print("=== AlphaPit Thermal-Safe Proteome Benchmark ===")
+    print(f"Power Profile:      {args.profile.upper()} ({workers} workers, {throttle_ms} ms throttle)")
+    print(f"Organism Tax ID:    {args.organism} (9606 = Homo sapiens)")
+    print(f"Target Structures:  {args.limit if args.limit else 'ALL'}")
+    print(f"pLDDT Quality Gate: >= {args.min_plddt}")
+    print(f"Shard Size:         {args.shard_size} structures / shard")
+    print(f"Target Storage:     {settings.full_index_path}")
+    print("------------------------------------------------")
+
+    index_name = f"human_proteome_{args.organism}"
+    shard_paths, metrics = await pipeline.stream_and_index_proteome(
         index_name=index_name,
         organism_tax_id=args.organism,
         limit=args.limit,
         min_plddt=args.min_plddt,
-        concurrency=args.concurrency,
+        shard_size=args.shard_size,
+        concurrency=workers,
         show_progress=True,
     )
 
@@ -129,9 +142,9 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
     print(f"Throughput (Proteins):  {metrics.structures_per_second:.2f} structures/s")
     print(f"Total Vectors Indexed:  {metrics.total_surface_patches:,} patches")
     print(f"Throughput (Vectors):   {metrics.patches_per_second:,.1f} vectors/s")
-    print(f"Network Ingestion Rate: {metrics.network_throughput_mb_s:.2f} MB/s")
-    if index_path.exists():
-        print(f"Pithos Container Size:  {index_path.stat().st_size / (1024 * 1024):.2f} MB ({index_path.name})")
+    print(f"Total Shards Created:   {len(shard_paths)}")
+    for sp in shard_paths:
+        print(f"  Shard File: {sp.name} ({sp.stat().st_size / (1024 * 1024):.2f} MB)")
 
 
 def cmd_benchmark(args: argparse.Namespace) -> None:
@@ -175,8 +188,10 @@ def main() -> None:
 
     # benchmark
     p_bm = subparsers.add_parser("benchmark", help="Run live concurrent AlphaFold proteome streaming benchmark")
-    p_bm.add_argument("--limit", type=int, default=30, help="Number of proteome structures to stream")
-    p_bm.add_argument("--concurrency", type=int, default=12, help="Number of concurrent worker streams")
+    p_bm.add_argument("--limit", type=int, default=10, help="Number of proteome structures to stream (None = all)")
+    p_bm.add_argument("--concurrency", type=int, default=4, help="Number of concurrent worker streams")
+    p_bm.add_argument("--profile", choices=["cool_quiet", "balanced", "turbo"], default="balanced", help="Thermal and power profile")
+    p_bm.add_argument("--shard-size", type=int, default=250, help="Number of structures per .pithos shard file")
     p_bm.add_argument("--organism", default="9606", help="NCBI Tax ID (default: 9606 for Homo sapiens)")
     p_bm.add_argument("--min-plddt", type=float, default=70.0, help="Minimum pLDDT threshold for folded residues")
     p_bm.set_defaults(func=cmd_benchmark)
