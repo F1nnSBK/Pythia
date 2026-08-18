@@ -106,20 +106,21 @@ def cmd_search(args: argparse.Namespace) -> None:
 async def _run_benchmark(args: argparse.Namespace) -> None:
     # Set power and thermal profile
     if args.profile == "cool_quiet":
-        workers = 2
-        throttle_ms = 40.0
+        workers = 1
+        throttle_ms = 50.0
     elif args.profile == "turbo":
-        workers = 8
+        workers = 4
         throttle_ms = 0.0
     else:  # balanced
-        workers = args.concurrency or 4
-        throttle_ms = 15.0
+        workers = args.concurrency or 2
+        throttle_ms = 25.0
 
+    actual_limit = None if (args.limit is None or args.limit <= 0) else args.limit
     pipeline = AlphaPitPipeline(concurrency=workers, throttle_sleep_ms=throttle_ms)
     print("=== AlphaPit Thermal-Safe Proteome Benchmark ===")
     print(f"Power Profile:      {args.profile.upper()} ({workers} workers, {throttle_ms} ms throttle)")
     print(f"Organism Tax ID:    {args.organism} (9606 = Homo sapiens)")
-    print(f"Target Structures:  {args.limit if args.limit else 'ALL'}")
+    print(f"Target Structures:  {actual_limit if actual_limit else 'ALL (Human Proteome ~20,400 reviewed)'}")
     print(f"pLDDT Quality Gate: >= {args.min_plddt}")
     print(f"Shard Size:         {args.shard_size} structures / shard")
     print(f"Target Storage:     {settings.full_index_path}")
@@ -129,7 +130,7 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
     shard_paths, metrics = await pipeline.stream_and_index_proteome(
         index_name=index_name,
         organism_tax_id=args.organism,
-        limit=args.limit,
+        limit=actual_limit,
         min_plddt=args.min_plddt,
         shard_size=args.shard_size,
         concurrency=workers,

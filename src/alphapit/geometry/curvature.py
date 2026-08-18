@@ -75,31 +75,48 @@ class MultiScaleCurvatureEstimator:
             m_vv = torch.matmul(v_weighted.transpose(1, 2), v)  # (B, 3, 3)
             m_wv = torch.matmul(v_weighted.transpose(1, 2), w)  # (B, 3, 3)
 
-            # Regularized pseudo-inverse: (M_vv + eps * I)^-1
+            # Fast closed-form 3x3 inversion (Cramer's rule) - 100% MPS/GPU native, zero CPU fallback
             eye = torch.eye(3, dtype=torch.float32, device=device).unsqueeze(0)
-            m_vv_reg = m_vv + self.eps * eye
-            inv_vv = torch.linalg.pinv(m_vv_reg)  # (B, 3, 3)
+            a = m_vv + self.eps * eye  # (B, 3, 3)
+
+            # Cofactor matrix for 3x3
+            c00 = a[:, 1, 1] * a[:, 2, 2] - a[:, 1, 2] * a[:, 2, 1]
+            c01 = -(a[:, 1, 0] * a[:, 2, 2] - a[:, 1, 2] * a[:, 2, 0])
+            c02 = a[:, 1, 0] * a[:, 2, 1] - a[:, 1, 1] * a[:, 2, 0]
+
+            c10 = -(a[:, 0, 1] * a[:, 2, 2] - a[:, 0, 2] * a[:, 2, 1])
+            c11 = a[:, 0, 0] * a[:, 2, 2] - a[:, 0, 2] * a[:, 2, 0]
+            c12 = -(a[:, 0, 0] * a[:, 2, 1] - a[:, 0, 1] * a[:, 2, 0])
+
+            c20 = a[:, 0, 1] * a[:, 1, 2] - a[:, 0, 2] * a[:, 1, 1]
+            c21 = -(a[:, 0, 0] * a[:, 1, 2] - a[:, 0, 2] * a[:, 1, 0])
+            c22 = a[:, 0, 0] * a[:, 1, 1] - a[:, 0, 1] * a[:, 1, 0]
+
+            det = (a[:, 0, 0] * c00 + a[:, 0, 1] * c01 + a[:, 0, 2] * c02).unsqueeze(-1).unsqueeze(-1).clamp(min=1e-6)
+
+            # Transposed cofactor matrix (adjugate)
+            adj = torch.stack([
+                torch.stack([c00, c10, c20], dim=-1),
+                torch.stack([c01, c11, c21], dim=-1),
+                torch.stack([c02, c12, c22], dim=-1)
+            ], dim=-2)
+
+            inv_vv = adj / det  # (B, 3, 3)
 
             # Shape operator tensor W = M_wv * inv_vv
             shape_op = torch.matmul(m_wv, inv_vv)  # (B, 3, 3)
 
-            # Trace gives twice the mean curvature, determinant of 2D tangent space gives Gaussian curvature
-            tr = torch.diagonal(shape_op, dim1=-2, dim2=-1).sum(dim=-1)  # (B,)
-            h = 0.5 * tr
+            # Mean curvature: 0.5 * trace
+            h = 0.5 * (shape_op[:, 0, 0] + shape_op[:, 1, 1] + shape_op[:, 2, 2])
 
-            # Compute eigenvalues of symmetric part 0.5 * (W + W^T)
-            shape_sym = 0.5 * (shape_op + shape_op.transpose(-1, -2))
-            try:
-                eigvals = torch.linalg.eigvalsh(shape_sym)  # (B, 3) sorted ascending
-                # The tangent plane has 2 non-zero eigenvalues; sort by absolute magnitude
-                k1 = eigvals[:, 2]
-                k2 = eigvals[:, 1]
-                k = k1 * k2
-            except Exception:
-                k = torch.zeros_like(h)
+            # Gaussian curvature from 2nd principal invariant
+            tr = 2.0 * h
+            tr2 = tr ** 2
+            w_sq_tr = torch.diagonal(torch.matmul(shape_op, shape_op), dim1=-2, dim2=-1).sum(dim=-1)
+            k = 0.5 * (tr2 - w_sq_tr)
 
-            mean_curv[start:end] = h
-            gauss_curv[start:end] = k
+            mean_curv[start:end] = torch.nan_to_num(h, nan=0.0, posinf=5.0, neginf=-5.0)
+            gauss_curv[start:end] = torch.nan_to_num(k, nan=0.0, posinf=10.0, neginf=-10.0)
 
         return mean_curv, gauss_curv
 
