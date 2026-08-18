@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alphapit"
+version = "0.1.0"
+description = "End-to-end geometric deep learning on protein surfaces with streaming download and Pithos vector index"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "AlphaPit Contributors" }
+]
+keywords = [
+    "protein-surfaces",
+    "geometric-deep-learning",
+    "dmasif",
+    "vector-database",
+    "pithosdb",
+    "structural-bioinformatics"
+]
+dependencies = [
+    "numpy>=1.26.0",
+    "scipy>=1.11.0",
+    "torch>=2.0.0",
+    "biopython>=1.80",
+    "httpx>=0.25.0",
+    "aiofiles>=23.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "tqdm>=4.65.0",
+    "pithosdb>=1.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.scripts]
+alphapit = "alphapit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+asyncio_mode = "auto"
