@@ -12,10 +12,11 @@ import sys
 import time
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 import numpy as np
 import torch
 
+from alphapit.analysis.convergent import ConvergentPocketMiner, render_convergent_tufte_svg
 from alphapit.config import settings
 from alphapit.download.client import PDBStreamDownloader
 from alphapit.pipeline import AlphaPitPipeline
@@ -116,7 +117,6 @@ async def _run_search_proteome(args: argparse.Namespace) -> None:
             if m.structure_id:
                 target_hits[m.structure_id].append(m)
 
-    # Rank targets by number of patch hits and best alignment score
     ranked_targets = sorted(
         target_hits.items(),
         key=lambda item: (len(item[1]), -np.mean([m.score for m in item[1]])),
@@ -141,6 +141,58 @@ async def _run_search_proteome(args: argparse.Namespace) -> None:
 
 def cmd_search_proteome(args: argparse.Namespace) -> None:
     asyncio.run(_run_search_proteome(args))
+
+
+async def _run_mine_pockets(args: argparse.Namespace) -> None:
+    miner = ConvergentPocketMiner()
+    t0 = time.perf_counter()
+
+    parsed_res: Optional[List[int]] = None
+    if args.residues:
+        parsed_res = [int(r.strip()) for r in args.residues.split(",") if r.strip().isdigit()]
+
+    print("=== AlphaPit Convergent Evolution & Pocket Mining Engine ===")
+    print(f"Query Structure:    {args.query_id}")
+    if parsed_res:
+        print(f"Target Pocket Res:  {parsed_res}")
+    else:
+        print("Target Pocket Res:  [Automatic Geometric Pocket Detection via Curvature]")
+    print(f"Target Storage:     {settings.full_index_path}")
+    print("Mining all 5 Pithos shards for fold-independent pocket congruency...")
+
+    surface, matches = await miner.mine_pocket(
+        query_id=args.query_id,
+        pocket_residues=parsed_res,
+        file_format=args.format,
+        top_k=args.top_k,
+        max_results=args.max_results,
+    )
+
+    t_mine = time.perf_counter() - t0
+    print(f"\nMining completed in {t_mine:.2f} s across 1,250 human AlphaFold proteins!")
+
+    print("\n" + "=" * 88)
+    print(f"CONVERGENT POCKET MIMICRY CANDIDATES IN THE HUMAN PROTEOME ({args.query_id})")
+    print("=" * 88)
+    print(f"{'Rank':<5} | {'UniProt ID':<12} | {'Pocket Patches':<16} | {'Pocket RMSD':<14} | {'Best Score':<12} | {'Target Pocket Residues'}")
+    print("-" * 88)
+
+    for rank, m in enumerate(matches, 1):
+        res_sample = ", ".join(str(r) for r in m.matched_target_residues[:5])
+        rmsd_str = f"{m.spatial_pocket_rmsd:.2f} A" if m.spatial_pocket_rmsd < 50 else "N/A"
+        print(f"{rank:<5} | {m.target_uniprot_id:<12} | {m.num_matched_patches:<16} | {rmsd_str:<14} | {m.best_score:<12.1f} | {res_sample}")
+
+    print("=" * 88)
+
+    if matches:
+        top_match = matches[0]
+        out_svg = Path(f"docs/{args.query_id}_convergent_pocket_alignment.svg")
+        render_convergent_tufte_svg(args.query_id, top_match, out_svg)
+        print(f"\nGenerated Tufte Scientific Comparison SVG at: {out_svg}")
+
+
+def cmd_mine_pockets(args: argparse.Namespace) -> None:
+    asyncio.run(_run_mine_pockets(args))
 
 
 async def _run_proteome(args: argparse.Namespace) -> None:
@@ -221,6 +273,15 @@ def main() -> None:
     p_all.add_argument("--alphafold", action="store_true", help="Query is an AlphaFold UniProt ID")
     p_all.add_argument("--format", choices=["pdb", "cif"], default="pdb", help="Structure format")
     p_all.set_defaults(func=cmd_search_proteome)
+
+    # mine-pockets (convergent pocket mimicry)
+    p_mine = subparsers.add_parser("mine-pockets", help="Mine for convergent binding pockets and polypharmacology targets")
+    p_mine.add_argument("query_id", help="Query PDB ID (e.g. 1M17, 1A8O, 6LU7, 1FKB)")
+    p_mine.add_argument("--residues", default=None, help="Comma-separated list of active pocket residues")
+    p_mine.add_argument("--top-k", type=int, default=5, help="Matches per pocket patch")
+    p_mine.add_argument("--max-results", type=int, default=8, help="Maximum convergent targets to display")
+    p_mine.add_argument("--format", choices=["pdb", "cif"], default="pdb", help="Structure format")
+    p_mine.set_defaults(func=cmd_mine_pockets)
 
     args = parser.parse_args()
     args.func(args)
