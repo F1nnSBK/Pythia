@@ -37,6 +37,7 @@ class LaplaceBeltramiEstimator:
     ) -> torch.Tensor:
         """
         Compute multi-scale Heat Kernel Signature of shape (P, len(diffusion_times)).
+        Optimized with landmark interpolation for large point clouds to prevent O(P^3) slowdown.
         """
         p = points.shape[0]
         device = points.device
@@ -45,8 +46,25 @@ class LaplaceBeltramiEstimator:
         if p < self.num_eigenvalues + 1:
             return torch.zeros((p, len(self.diffusion_times)), dtype=torch.float32, device=device)
 
+        # For performance on very large proteins, cap maximum spectral mesh size to 1024 landmarks
+        max_landmarks = 1024
+        if p > max_landmarks:
+            sub_idx = torch.linspace(0, p - 1, max_landmarks, dtype=torch.long, device=device)
+            sub_pts = points[sub_idx]
+            hks_sub = self._compute_hks_raw(sub_pts)
+            # Nearest neighbor interpolation back to all P points
+            dists = torch.cdist(points, sub_pts)  # (P, max_landmarks)
+            nearest = torch.argmin(dists, dim=-1)  # (P,)
+            return hks_sub[nearest]
+        else:
+            return self._compute_hks_raw(points)
+
+    def _compute_hks_raw(self, pts: torch.Tensor) -> torch.Tensor:
+        p = pts.shape[0]
+        device = pts.device
+
         # 1. Compute pairwise distance matrix (in float32)
-        dist_matrix = torch.cdist(points, points)  # (P, P)
+        dist_matrix = torch.cdist(pts, pts)  # (P, P)
 
         # 2. Gaussian affinity weights on local neighborhood graph
         in_range = (dist_matrix <= self.neighbor_radius)
@@ -62,29 +80,23 @@ class LaplaceBeltramiEstimator:
         l_sym = torch.eye(p, dtype=torch.float32, device=device) - w_norm
 
         # 3. Spectral Decomposition
-        # L_sym is symmetric and positive semi-definite
         k = min(self.num_eigenvalues, p)
         try:
-            # Eigendecomposition on CPU if large/MPS fallback
             l_sym_cpu = l_sym.detach().cpu()
             eigvals, eigvecs = torch.linalg.eigh(l_sym_cpu)  # Sorted in ascending order
 
-            # Select lowest k non-trivial eigenvalues (eigenvalues start near 0)
             evals = eigvals[:k].to(device)  # (K,)
             evecs = eigvecs[:, :k].to(device)  # (P, K)
 
-            # Re-scale eigenvectors to original manifold: phi = D^{-1/2} evecs
             phi = d_inv_sqrt.unsqueeze(1) * evecs  # (P, K)
             phi_sq = phi ** 2  # (P, K)
 
             # 4. Multi-scale Heat Kernel Signatures
             hks_features: List[torch.Tensor] = []
             for t in self.diffusion_times:
-                # Heat decay: exp(-lambda_k * t)
                 heat_decay = torch.exp(-torch.clamp(evals * t, max=50.0))  # (K,)
                 hks_t = torch.matmul(phi_sq, heat_decay)  # (P,)
 
-                # Normalization by trace
                 trace = torch.sum(heat_decay).clamp(min=1e-6)
                 hks_norm = hks_t / trace
                 hks_features.append(hks_norm.unsqueeze(-1))

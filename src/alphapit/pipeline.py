@@ -235,7 +235,8 @@ class AlphaPitPipeline:
         global_rec_id = 0
         structures_in_current_shard = 0
 
-        pbar = tqdm(total=limit, desc="Streaming Proteome", disable=not show_progress)
+        total_expected = limit if limit is not None else 20400
+        pbar = tqdm(total=total_expected, desc="Streaming Proteome", disable=not show_progress)
 
         def flush_shard():
             nonlocal structures_in_current_shard, shard_idx, global_rec_id
@@ -295,6 +296,17 @@ class AlphaPitPipeline:
                     metrics.total_structures_succeeded += 1
                     metrics.total_surface_patches += embs.shape[0]
                     metrics.total_network_bytes += 100 * 1024
+
+                    rate_struct = metrics.structures_per_second
+                    rate_vec = metrics.patches_per_second
+                    print(
+                        f"[{time.strftime('%H:%M:%S')}] Shard {shard_idx:03d} | "
+                        f"Processed {metrics.total_structures_succeeded} / {total_expected} ({metrics.total_structures_succeeded / total_expected * 100:.1f}%) | "
+                        f"Last: {item.uniprot_accession} (+{embs.shape[0]} patches) | "
+                        f"Total: {metrics.total_surface_patches:,} vectors | "
+                        f"Speed: {rate_struct:.2f} struct/s ({rate_vec:,.1f} vec/s)",
+                        flush=True,
+                    )
 
                     # Periodic memory cleanup & shard flushing
                     if structures_in_current_shard >= shard_size:
