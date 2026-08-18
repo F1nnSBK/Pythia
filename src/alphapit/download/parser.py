@@ -106,12 +106,14 @@ class StreamingPDBParser:
         include_heteroatoms: bool = False,
         ignore_waters: bool = True,
         allowed_chains: Optional[Set[str]] = None,
+        min_plddt: float = 0.0,
     ) -> None:
         self.element_vocab = element_vocab or ["C", "H", "O", "N", "S", "P", "OTHER"]
         self.element_to_idx = {elem: idx for idx, elem in enumerate(self.element_vocab)}
         self.include_heteroatoms = include_heteroatoms
         self.ignore_waters = ignore_waters
         self.allowed_chains = allowed_chains
+        self.min_plddt = min_plddt
 
     def _normalize_element(self, raw_element: str, atom_name: str) -> str:
         """Clean and normalize element symbol."""
@@ -219,6 +221,8 @@ class StreamingPDBParser:
 
             b_col = col_map.get("_atom_site.B_iso_or_equiv")
             b_factor = float(tokens[b_col]) if b_col is not None and b_col < len(tokens) else 0.0
+            if self.min_plddt > 0.0 and b_factor < self.min_plddt:
+                return None
 
             elem_col = col_map.get("_atom_site.type_symbol")
             raw_element = tokens[elem_col].strip() if elem_col is not None and elem_col < len(tokens) else ""

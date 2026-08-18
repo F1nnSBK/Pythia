@@ -94,5 +94,19 @@ def test_surface_feature_extractor(sample_structure_data):
     surface = extractor.extract(pc)
 
     combined = SurfaceFeatureExtractor.get_combined_features(surface)
-    # 7 chemical + (5 scales * 2) = 17 features
-    assert combined.shape == (surface.num_points, 17)
+    # 7 chemical + (5 scales * 2 curvature) + 4 Laplace-Beltrami HKS = 21 features
+    assert combined.shape == (surface.num_points, 21)
+
+
+def test_laplacian_estimator(sample_structure_data):
+    from alphapit.geometry.laplacian import LaplaceBeltramiEstimator
+    pc = ProteinPointCloud.from_structure_data(sample_structure_data)
+    gen = MolecularSurfaceGenerator(sup_sampling=12)
+    surface = gen.generate_surface(pc)
+
+    estimator = LaplaceBeltramiEstimator(num_eigenvalues=8, diffusion_times=[0.1, 1.0, 10.0])
+    hks = estimator.extract_features(surface)
+
+    assert hks.shape == (surface.num_points, 3)
+    assert not torch.isnan(hks).any()
+    assert (hks >= 0.0).all()

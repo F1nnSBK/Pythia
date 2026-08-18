@@ -103,6 +103,41 @@ def cmd_search(args: argparse.Namespace) -> None:
     asyncio.run(_run_search(args))
 
 
+async def _run_benchmark(args: argparse.Namespace) -> None:
+    pipeline = AlphaPitPipeline(concurrency=args.concurrency)
+    print("=== AlphaPit Live Concurrent Proteome Benchmark ===")
+    print(f"Organism Tax ID:    {args.organism} (9606 = Homo sapiens)")
+    print(f"Target Structures:  {args.limit}")
+    print(f"Worker Concurrency: {args.concurrency} async workers")
+    print(f"pLDDT Quality Gate: >= {args.min_plddt}")
+    print(f"Target Storage:     {settings.full_index_path}")
+    print("---------------------------------------------------")
+
+    index_name = f"benchmark_org_{args.organism}_{args.limit}"
+    index_path, metrics = await pipeline.stream_and_index_proteome(
+        index_name=index_name,
+        organism_tax_id=args.organism,
+        limit=args.limit,
+        min_plddt=args.min_plddt,
+        concurrency=args.concurrency,
+        show_progress=True,
+    )
+
+    print("\n=== Benchmark Results ===")
+    print(f"Elapsed Time:           {metrics.elapsed_seconds:.2f} s")
+    print(f"Structures Processed:   {metrics.total_structures_succeeded} / {metrics.total_structures_attempted}")
+    print(f"Throughput (Proteins):  {metrics.structures_per_second:.2f} structures/s")
+    print(f"Total Vectors Indexed:  {metrics.total_surface_patches:,} patches")
+    print(f"Throughput (Vectors):   {metrics.patches_per_second:,.1f} vectors/s")
+    print(f"Network Ingestion Rate: {metrics.network_throughput_mb_s:.2f} MB/s")
+    if index_path.exists():
+        print(f"Pithos Container Size:  {index_path.stat().st_size / (1024 * 1024):.2f} MB ({index_path.name})")
+
+
+def cmd_benchmark(args: argparse.Namespace) -> None:
+    asyncio.run(_run_benchmark(args))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="alphapit",
@@ -116,7 +151,7 @@ def main() -> None:
 
     # download
     p_dl = subparsers.add_parser("download", help="Stream download structures to NVMe SSD cache")
-    p_dl.add_argument("ids", nargs="+", help="PDB IDs (e.g. 1a8o 6m0j) or UniProt IDs")
+    p_dl.add_argument("ids", nargs="+", help="PDB IDs or UniProt IDs")
     p_dl.add_argument("--alphafold", action="store_true", help="Download from AlphaFold Database")
     p_dl.add_argument("--format", choices=["pdb", "cif"], default="pdb", help="Structure format")
     p_dl.set_defaults(func=cmd_download)
@@ -137,6 +172,14 @@ def main() -> None:
     p_srch.add_argument("--alphafold", action="store_true", help="Query is an AlphaFold ID")
     p_srch.add_argument("--format", choices=["pdb", "cif"], default="pdb", help="Structure format")
     p_srch.set_defaults(func=cmd_search)
+
+    # benchmark
+    p_bm = subparsers.add_parser("benchmark", help="Run live concurrent AlphaFold proteome streaming benchmark")
+    p_bm.add_argument("--limit", type=int, default=30, help="Number of proteome structures to stream")
+    p_bm.add_argument("--concurrency", type=int, default=12, help="Number of concurrent worker streams")
+    p_bm.add_argument("--organism", default="9606", help="NCBI Tax ID (default: 9606 for Homo sapiens)")
+    p_bm.add_argument("--min-plddt", type=float, default=70.0, help="Minimum pLDDT threshold for folded residues")
+    p_bm.set_defaults(func=cmd_benchmark)
 
     args = parser.parse_args()
     args.func(args)
