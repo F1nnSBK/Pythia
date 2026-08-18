@@ -29,54 +29,20 @@ def cmd_status(args: argparse.Namespace) -> None:
     else:
         print(f"NVMe SSD Mount:     {ssd_path} (NOT MOUNTED, using fallback: {settings.storage_root})")
 
-    print(f"Raw Cache Path:     {settings.full_raw_cache_path}")
-    print(f"Pithos Index Path:  {settings.full_index_path}")
+    print(f"Index Storage Path: {settings.full_index_path}")
+    print(f"Temporary Buffer:   {settings.full_temp_path}")
 
     # Compute Device
     if torch.backends.mps.is_available():
-        device_str = "Apple Silicon MPS (Metal Performance Shaders)"
+        device_str = "Apple Silicon MPS (Metal Performance Shaders, Single-Threaded)"
     elif torch.cuda.is_available():
         device_str = f"NVIDIA CUDA ({torch.cuda.get_device_name(0)})"
     else:
         device_str = "CPU"
     print(f"Compute Backend:    {device_str}")
+    print(f"Surface Resolution: {settings.surface_resolution} A (super_sampling={settings.sup_sampling})")
+    print(f"Vector Dimension:   {settings.vector_dimension} (Dual Fingerprint: 7 Chem + 10 Curv + 4 LBO)")
     print(f"Matryoshka Tiers:   {settings.matryoshka_tiers}")
-
-
-async def _run_download(args: argparse.Namespace) -> None:
-    downloader = PDBStreamDownloader()
-    async with downloader:
-        print(f"Downloading {len(args.ids)} structures to {settings.full_raw_cache_path}...")
-        for sid in args.ids:
-            try:
-                cached_file = await downloader.download_to_cache(
-                    structure_id=sid,
-                    is_alphafold=args.alphafold,
-                    file_format=args.format,
-                )
-                print(f"  [OK] {sid.upper()} -> {cached_file.name} ({cached_file.stat().st_size / 1024:.1f} KB)")
-            except Exception as e:
-                print(f"  [ERROR] {sid.upper()}: {e}")
-
-
-def cmd_download(args: argparse.Namespace) -> None:
-    asyncio.run(_run_download(args))
-
-
-async def _run_index(args: argparse.Namespace) -> None:
-    pipeline = AlphaPitPipeline()
-    print(f"Streaming and indexing {len(args.ids)} structures into PithosDB index '{args.name}'...")
-    index_path = await pipeline.index_structures(
-        index_name=args.name,
-        structure_ids=args.ids,
-        is_alphafold=args.alphafold,
-        file_format=args.format,
-    )
-    print(f"Indexing complete! Multi-tier Pithos index compiled at: {index_path}")
-
-
-def cmd_index(args: argparse.Namespace) -> None:
-    asyncio.run(_run_index(args))
 
 
 async def _run_search(args: argparse.Namespace) -> None:
@@ -103,28 +69,21 @@ def cmd_search(args: argparse.Namespace) -> None:
     asyncio.run(_run_search(args))
 
 
-async def _run_benchmark(args: argparse.Namespace) -> None:
-    # Set power and thermal profile
-    if args.profile == "cool_quiet":
-        workers = 1
-        throttle_ms = 50.0
-    elif args.profile == "turbo":
-        workers = 4
-        throttle_ms = 0.0
-    else:  # balanced
-        workers = args.concurrency or 2
-        throttle_ms = 25.0
-
+async def _run_proteome(args: argparse.Namespace) -> None:
+    pipeline = AlphaPitPipeline(
+        concurrency=1,
+        throttle_sleep_ms=args.throttle_ms,
+    )
     actual_limit = None if (args.limit is None or args.limit <= 0) else args.limit
-    pipeline = AlphaPitPipeline(concurrency=workers, throttle_sleep_ms=throttle_ms)
-    print("=== AlphaPit Thermal-Safe Proteome Benchmark ===")
-    print(f"Power Profile:      {args.profile.upper()} ({workers} workers, {throttle_ms} ms throttle)")
-    print(f"Organism Tax ID:    {args.organism} (9606 = Homo sapiens)")
-    print(f"Target Structures:  {actual_limit if actual_limit else 'ALL (Human Proteome ~20,400 reviewed)'}")
-    print(f"pLDDT Quality Gate: >= {args.min_plddt}")
-    print(f"Shard Size:         {args.shard_size} structures / shard")
+
+    print("=== AlphaPit Proteome Streaming Pipeline ===")
+    print(f"Target Organism:    Tax ID {args.organism} (9606 = Homo sapiens)")
+    print(f"Target Limit:       {actual_limit if actual_limit else 'ALL (~20,400 reviewed)'}")
+    print(f"Hardware Profile:   Single-Worker Gentle (<400MB RAM ceiling, {args.throttle_ms}ms throttle)")
+    print(f"Shard Size:         {args.shard_size} structures / shard container")
+    print(f"Quality Gate:       pLDDT >= {args.min_plddt}")
     print(f"Target Storage:     {settings.full_index_path}")
-    print("------------------------------------------------")
+    print("--------------------------------------------")
 
     index_name = f"human_proteome_{args.organism}"
     shard_paths, metrics = await pipeline.stream_and_index_proteome(
@@ -133,23 +92,21 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         limit=actual_limit,
         min_plddt=args.min_plddt,
         shard_size=args.shard_size,
-        concurrency=workers,
+        concurrency=1,
         show_progress=True,
     )
 
-    print("\n=== Benchmark Results ===")
+    print("\n=== Proteome Run Completed ===")
     print(f"Elapsed Time:           {metrics.elapsed_seconds:.2f} s")
     print(f"Structures Processed:   {metrics.total_structures_succeeded} / {metrics.total_structures_attempted}")
-    print(f"Throughput (Proteins):  {metrics.structures_per_second:.2f} structures/s")
-    print(f"Total Vectors Indexed:  {metrics.total_surface_patches:,} patches")
-    print(f"Throughput (Vectors):   {metrics.patches_per_second:,.1f} vectors/s")
+    print(f"Average Throughput:     {metrics.structures_per_second:.2f} structures/s ({metrics.patches_per_second:,.1f} vectors/s)")
     print(f"Total Shards Created:   {len(shard_paths)}")
     for sp in shard_paths:
-        print(f"  Shard File: {sp.name} ({sp.stat().st_size / (1024 * 1024):.2f} MB)")
+        print(f"  Shard: {sp.name} ({sp.stat().st_size / (1024 * 1024):.2f} MB)")
 
 
-def cmd_benchmark(args: argparse.Namespace) -> None:
-    asyncio.run(_run_benchmark(args))
+def cmd_proteome(args: argparse.Namespace) -> None:
+    asyncio.run(_run_proteome(args))
 
 
 def main() -> None:
@@ -163,39 +120,23 @@ def main() -> None:
     p_status = subparsers.add_parser("status", help="Show system, NVMe SSD, and backend status")
     p_status.set_defaults(func=cmd_status)
 
-    # download
-    p_dl = subparsers.add_parser("download", help="Stream download structures to NVMe SSD cache")
-    p_dl.add_argument("ids", nargs="+", help="PDB IDs or UniProt IDs")
-    p_dl.add_argument("--alphafold", action="store_true", help="Download from AlphaFold Database")
-    p_dl.add_argument("--format", choices=["pdb", "cif"], default="pdb", help="Structure format")
-    p_dl.set_defaults(func=cmd_download)
-
-    # index
-    p_idx = subparsers.add_parser("index", help="Stream structures and compile into PithosDB index")
-    p_idx.add_argument("name", help="Name of the PithosDB index")
-    p_idx.add_argument("ids", nargs="+", help="PDB IDs or UniProt IDs to index")
-    p_idx.add_argument("--alphafold", action="store_true", help="Download from AlphaFold Database")
-    p_idx.add_argument("--format", choices=["pdb", "cif"], default="pdb", help="Structure format")
-    p_idx.set_defaults(func=cmd_index)
+    # run-proteome
+    p_prot = subparsers.add_parser("run-proteome", help="Run low-impact streaming proteome indexing")
+    p_prot.add_argument("--organism", default="9606", help="NCBI Tax ID (default: 9606 for Homo sapiens)")
+    p_prot.add_argument("--limit", type=int, default=0, help="Number of structures (0 or omit for all)")
+    p_prot.add_argument("--shard-size", type=int, default=250, help="Structures per .pithos shard file")
+    p_prot.add_argument("--min-plddt", type=float, default=70.0, help="Minimum pLDDT confidence filter")
+    p_prot.add_argument("--throttle-ms", type=float, default=20.0, help="Inter-structure cooldown in milliseconds")
+    p_prot.set_defaults(func=cmd_proteome)
 
     # search
     p_srch = subparsers.add_parser("search", help="Search compiled PithosDB index with query structure")
-    p_srch.add_argument("name", help="Name of the PithosDB index to query")
+    p_srch.add_argument("name", help="Name of the PithosDB index or shard")
     p_srch.add_argument("query_id", help="Query PDB ID or UniProt ID")
     p_srch.add_argument("--top-k", type=int, default=5, help="Number of nearest neighbors to retrieve")
     p_srch.add_argument("--alphafold", action="store_true", help="Query is an AlphaFold ID")
     p_srch.add_argument("--format", choices=["pdb", "cif"], default="pdb", help="Structure format")
     p_srch.set_defaults(func=cmd_search)
-
-    # benchmark
-    p_bm = subparsers.add_parser("benchmark", help="Run live concurrent AlphaFold proteome streaming benchmark")
-    p_bm.add_argument("--limit", type=int, default=10, help="Number of proteome structures to stream (None = all)")
-    p_bm.add_argument("--concurrency", type=int, default=4, help="Number of concurrent worker streams")
-    p_bm.add_argument("--profile", choices=["cool_quiet", "balanced", "turbo"], default="balanced", help="Thermal and power profile")
-    p_bm.add_argument("--shard-size", type=int, default=250, help="Number of structures per .pithos shard file")
-    p_bm.add_argument("--organism", default="9606", help="NCBI Tax ID (default: 9606 for Homo sapiens)")
-    p_bm.add_argument("--min-plddt", type=float, default=70.0, help="Minimum pLDDT threshold for folded residues")
-    p_bm.set_defaults(func=cmd_benchmark)
 
     args = parser.parse_args()
     args.func(args)

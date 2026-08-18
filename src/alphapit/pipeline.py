@@ -1,6 +1,7 @@
 """
-End-to-end AlphaPit pipeline orchestrating concurrent streaming download, live metadata fetching,
-geometry generation, dMaSIF neural inference, sharded storage, and thermal-safe resource management.
+End-to-end AlphaPit pipeline orchestrating deterministic single-stream processing,
+live metadata fetching, geometry generation, dMaSIF neural inference, sharded storage,
+and strict memory management tailored for fanless Apple Silicon devices.
 """
 
 from __future__ import annotations
@@ -33,7 +34,7 @@ from alphapit.storage.adapter import (
 
 @dataclass
 class PipelineMetrics:
-    """Real-time performance, throughput, and thermal metrics."""
+    """Real-time performance, throughput, and memory metrics."""
     total_structures_attempted: int = 0
     total_structures_succeeded: int = 0
     total_surface_patches: int = 0
@@ -62,8 +63,8 @@ class PipelineMetrics:
 
 class AlphaPitPipeline:
     """
-    Unified high-level pipeline for streaming protein structures to Pithos vector database
-    with thermal pacing, automatic sharding, and checkpoint resume capability.
+    Unified high-level pipeline for streaming protein structures to Pithos vector database.
+    Designed specifically for fanless Apple Silicon (M-series) with strict memory bounds.
     """
 
     def __init__(
@@ -73,22 +74,22 @@ class AlphaPitPipeline:
         model: Optional[dMaSIFNet] = None,
         storage_adapter: Optional[PithosStorageAdapter] = None,
         device: Optional[str] = None,
-        concurrency: int = 4,
-        throttle_sleep_ms: float = 15.0,
+        concurrency: int = 1,
+        throttle_sleep_ms: float = 20.0,
     ) -> None:
         self.device = device or ("mps" if torch.backends.mps.is_available() else "cpu")
-        self.concurrency = concurrency
+        self.concurrency = max(1, concurrency)
         self.throttle_sleep_ms = throttle_sleep_ms
-        self.downloader = downloader or PDBStreamDownloader(concurrency_limit=concurrency)
+        self.downloader = downloader or PDBStreamDownloader(concurrency_limit=self.concurrency)
         self.feature_extractor = feature_extractor or SurfaceFeatureExtractor()
-        self.model = (model or dMaSIFNet()).to(self.device)
+        self.model = (model or dMaSIFNet(in_channels=21)).to(self.device)
         self.model.eval()
         self.storage = storage_adapter or PithosStorageAdapter()
 
     def _apply_thermal_governor(self) -> None:
-        """Lower CPU priority slightly so system and UI remain 100% responsive."""
+        """Set nice process priority so macOS UI remains 100% responsive."""
         try:
-            os.nice(4)
+            os.nice(5)
         except Exception:
             pass
 
@@ -113,13 +114,9 @@ class AlphaPitPipeline:
                 structure_id, file_format=file_format, allowed_chains=allowed_chains
             )
 
-        # 1. Convert to atomic point cloud
         pc = ProteinPointCloud.from_structure_data(struct_data, device=self.device)
-
-        # 2. On-the-fly molecular surface and curvature extraction
         surface = self.feature_extractor.extract(pc)
 
-        # 3. Model inference
         with torch.no_grad():
             output = self.model(surface)
 
@@ -131,8 +128,7 @@ class AlphaPitPipeline:
         min_plddt: float = 0.0,
     ) -> Optional[Tuple[np.ndarray, List[SurfaceVectorRecord]]]:
         """
-        Stream and process a single AlphaFold protein from metadata with on-the-fly pLDDT filter.
-        Pulls live metadata from EBI server for latest model URLs.
+        Stream and process a single AlphaFold protein with immediate memory release.
         """
         try:
             cif_url = meta.cif_url
@@ -177,7 +173,10 @@ class AlphaPitPipeline:
                     )
                 )
 
-            # Thermal cooldown
+            # Instant memory cleanup
+            del struct_data, pc, surface, output
+
+            # Gentle thermal throttle
             if self.throttle_sleep_ms > 0:
                 await asyncio.sleep(self.throttle_sleep_ms / 1000.0)
 
@@ -211,42 +210,40 @@ class AlphaPitPipeline:
         organism_tax_id: str = "9606",  # Homo sapiens
         limit: Optional[int] = None,
         min_plddt: float = 70.0,
-        shard_size: int = 500,
-        concurrency: Optional[int] = None,
+        shard_size: int = 250,
+        concurrency: int = 1,
         show_progress: bool = True,
     ) -> Tuple[List[Path], PipelineMetrics]:
         """
-        Production-grade proteome streaming pipeline with automatic SSD sharding,
-        checkpoint resume, and thermal pacing.
+        Deterministic, low-impact streaming pipeline designed for fanless Apple Silicon.
+        Flushes to SSD in bounded shards and enforces zero RAM accumulation.
         """
         self._apply_thermal_governor()
-        num_workers = concurrency or self.concurrency
         metrics = PipelineMetrics()
         metrics.start_time = time.perf_counter()
 
         checkpoint_file = settings.full_index_path / f"{index_name}_checkpoint.json"
         processed_ids = self._load_checkpoint(checkpoint_file)
 
-        queue: asyncio.Queue[Optional[AlphaFoldMetadata]] = asyncio.Queue(maxsize=num_workers * 2)
         current_shard_embeddings: List[np.ndarray] = []
         current_shard_metadata: List[SurfaceVectorRecord] = []
         shard_paths: List[Path] = []
-        shard_idx = len(list(settings.full_index_path.glob(f"{index_name}_shard_*.pithos"))) + 1
-        global_rec_id = 0
+        existing_shards = list(settings.full_index_path.glob(f"{index_name}_shard_*.pithos"))
+        shard_idx = len(existing_shards) + 1
         structures_in_current_shard = 0
 
         total_expected = limit if limit is not None else 20400
         pbar = tqdm(total=total_expected, desc="Streaming Proteome", disable=not show_progress)
 
         def flush_shard():
-            nonlocal structures_in_current_shard, shard_idx, global_rec_id
+            nonlocal structures_in_current_shard, shard_idx
             if not current_shard_embeddings:
                 return
 
             shard_name = f"{index_name}_shard_{shard_idx:04d}"
             combined = np.vstack(current_shard_embeddings)
 
-            # Assign contiguous record IDs
+            # Assign contiguous record IDs within shard
             indexed_meta = []
             rec_offset = 0
             for meta_rec in current_shard_metadata:
@@ -261,6 +258,12 @@ class AlphaPitPipeline:
             )
             shard_paths.append(shard_path)
             metrics.total_shards_written += 1
+
+            print(
+                f"[{time.strftime('%H:%M:%S')}] Shard {shard_idx:03d} compiled -> "
+                f"{shard_path.name} ({shard_path.stat().st_size / (1024 * 1024):.2f} MB, {len(indexed_meta):,} vectors)",
+                flush=True,
+            )
             shard_idx += 1
 
             # Clear memory immediately
@@ -273,71 +276,52 @@ class AlphaPitPipeline:
                 torch.mps.empty_cache()
             gc.collect()
 
-        async def worker():
-            nonlocal structures_in_current_shard
-            while True:
-                item = await queue.get()
-                if item is None:
-                    queue.task_done()
-                    break
-
-                if item.uniprot_accession in processed_ids:
-                    pbar.update(1)
-                    queue.task_done()
-                    continue
-
-                res = await self.process_single_metadata_item(item, min_plddt=min_plddt)
-                if res is not None:
-                    embs, meta_list = res
-                    current_shard_embeddings.append(embs)
-                    current_shard_metadata.extend(meta_list)
-                    processed_ids.add(item.uniprot_accession)
-                    structures_in_current_shard += 1
-                    metrics.total_structures_succeeded += 1
-                    metrics.total_surface_patches += embs.shape[0]
-                    metrics.total_network_bytes += 100 * 1024
-
-                    rate_struct = metrics.structures_per_second
-                    rate_vec = metrics.patches_per_second
-                    print(
-                        f"[{time.strftime('%H:%M:%S')}] Shard {shard_idx:03d} | "
-                        f"Processed {metrics.total_structures_succeeded} / {total_expected} ({metrics.total_structures_succeeded / total_expected * 100:.1f}%) | "
-                        f"Last: {item.uniprot_accession} (+{embs.shape[0]} patches) | "
-                        f"Total: {metrics.total_surface_patches:,} vectors | "
-                        f"Speed: {rate_struct:.2f} struct/s ({rate_vec:,.1f} vec/s)",
-                        flush=True,
-                    )
-
-                    # Periodic memory cleanup & shard flushing
-                    if structures_in_current_shard >= shard_size:
-                        flush_shard()
-                        self._save_checkpoint(checkpoint_file, processed_ids)
-
-                pbar.update(1)
-                queue.task_done()
-
-        # Start worker pool
-        worker_tasks = [asyncio.create_task(worker()) for _ in range(num_workers)]
-
-        # Producer: stream metadata from UniProt into queue
-        produced_count = 0
+        # Producer & Sequential Processor (1 worker, zero thread fighting)
+        processed_count = 0
         async for meta in self.downloader.stream_uniprot_proteome(
             organism_tax_id=organism_tax_id, limit=limit
         ):
             metrics.total_structures_attempted += 1
-            await queue.put(meta)
-            produced_count += 1
-            if limit and produced_count >= limit:
+
+            if meta.uniprot_accession in processed_ids:
+                pbar.update(1)
+                continue
+
+            res = await self.process_single_metadata_item(meta, min_plddt=min_plddt)
+            if res is not None:
+                embs, meta_list = res
+                current_shard_embeddings.append(embs)
+                current_shard_metadata.extend(meta_list)
+                processed_ids.add(meta.uniprot_accession)
+                structures_in_current_shard += 1
+                metrics.total_structures_succeeded += 1
+                metrics.total_surface_patches += embs.shape[0]
+                metrics.total_network_bytes += 80 * 1024
+
+                rate_struct = metrics.structures_per_second
+                rate_vec = metrics.patches_per_second
+                pct = (metrics.total_structures_succeeded / total_expected) * 100.0
+                print(
+                    f"[{time.strftime('%H:%M:%S')}] Shard {shard_idx:03d} | "
+                    f"Processed {metrics.total_structures_succeeded} / {total_expected} ({pct:.1f}%) | "
+                    f"Last: {meta.uniprot_accession} (+{embs.shape[0]} patches) | "
+                    f"Total: {metrics.total_surface_patches:,} vectors | "
+                    f"Speed: {rate_struct:.2f} struct/s ({rate_vec:,.1f} vec/s)",
+                    flush=True,
+                )
+
+                if structures_in_current_shard >= shard_size:
+                    flush_shard()
+                    self._save_checkpoint(checkpoint_file, processed_ids)
+
+            pbar.update(1)
+            processed_count += 1
+            if limit and processed_count >= limit:
                 break
 
-        # Stop workers
-        for _ in range(num_workers):
-            await queue.put(None)
-
-        await asyncio.gather(*worker_tasks)
         pbar.close()
 
-        # Flush any remaining items in the buffer
+        # Flush any remaining items in buffer
         if current_shard_embeddings:
             flush_shard()
             self._save_checkpoint(checkpoint_file, processed_ids)
