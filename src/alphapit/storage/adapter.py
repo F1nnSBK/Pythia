@@ -215,5 +215,48 @@ class PithosStorageAdapter:
                         SurfaceQueryResult(record_id=match.id, score=match.score)
                     )
             enriched_batch.append(match_list)
-
         return enriched_batch
+
+    def list_available_shards(self, prefix: str = "") -> List[str]:
+        """List all compiled .pithos shard index names available in storage."""
+        pattern = f"{prefix}*.pithos" if prefix else "*.pithos"
+        shards = sorted(self.storage_dir.glob(pattern))
+        return [s.stem for s in shards]
+
+    def search_all_shards(
+        self,
+        query_vectors: np.ndarray,
+        shard_prefix: str = "human_proteome_9606_shard_",
+        k: int = 5,
+    ) -> List[List[SurfaceQueryResult]]:
+        """
+        Execute multi-shard search across all available index containers on SSD
+        and aggregate candidate matches into a globally ranked Top-K result set.
+        """
+        shard_names = self.list_available_shards(prefix=shard_prefix)
+        if not shard_names:
+            raise FileNotFoundError(f"No shards found matching prefix '{shard_prefix}' in {self.storage_dir}")
+
+        queries = np.asarray(query_vectors, dtype=np.float32)
+        num_queries = queries.shape[0] if queries.ndim > 1 else 1
+
+        # Global accumulator per query: list of all candidates from all shards
+        merged_results: List[List[SurfaceQueryResult]] = [[] for _ in range(num_queries)]
+
+        for shard_name in shard_names:
+            try:
+                shard_res = self.search(index_name=shard_name, query_vectors=queries, k=k)
+                for q_idx, matches in enumerate(shard_res):
+                    merged_results[q_idx].extend(matches)
+            except Exception as e:
+                print(f"Warning: Failed searching shard {shard_name}: {e}")
+                continue
+
+        # Sort by distance score ascending (lower score = higher geometric/chemical similarity)
+        final_top_k: List[List[SurfaceQueryResult]] = []
+        for q_idx, candidates in enumerate(merged_results):
+            sorted_candidates = sorted(candidates, key=lambda r: r.score)
+            final_top_k.append(sorted_candidates[:k])
+
+        return final_top_k
+
