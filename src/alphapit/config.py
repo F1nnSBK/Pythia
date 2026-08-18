@@ -56,6 +56,11 @@ class AlphaPitSettings(BaseSettings):
     # Remote Data Sources
     rcsb_base_url: str = "https://files.rcsb.org/download"
     alphafold_base_url: str = "https://alphafold.ebi.ac.uk/files"
+    # Streaming and Network Parameters
+    download_chunk_size: int = 64 * 1024  # 64 KB chunks
+    download_timeout_seconds: float = 30.0
+    download_max_retries: int = 3
+    download_concurrency: int = 4
 
     # Power & Thermal Safety Profile
     # Options: 'cool_quiet' (2 workers, high pacing), 'balanced' (4 workers, gentle pacing), 'turbo' (8 workers)
@@ -69,7 +74,7 @@ class AlphaPitSettings(BaseSettings):
     surface_resolution: float = 1.0  # Angstroms grid resolution
     distance_threshold: float = 1.05  # Surface iso-level distance
     smooth_variance: float = 0.1  # Gaussian smoothing factor
-    sup_sampling: int = 20  # Surface super-sampling multiplier
+    sup_sampling: int = 6  # Surface super-sampling multiplier (standard dMaSIF density ~1.0 A)
     curvature_scales: List[float] = Field(
         default_factory=lambda: [1.0, 2.0, 3.0, 5.0, 10.0]
     )
