@@ -1,6 +1,6 @@
 """
 End-to-end AlphaPit pipeline orchestrating deterministic single-stream processing,
-live metadata fetching, geometry generation, dMaSIF neural inference, sharded storage,
+live async prefetching, geometry generation, dMaSIF neural inference, sharded storage,
 and strict memory management tailored for fanless Apple Silicon devices.
 """
 
@@ -64,7 +64,7 @@ class PipelineMetrics:
 class AlphaPitPipeline:
     """
     Unified high-level pipeline for streaming protein structures to Pithos vector database.
-    Designed specifically for fanless Apple Silicon (M-series) with strict memory bounds.
+    Designed specifically for fanless Apple Silicon (M-series) with prefetching & strict memory bounds.
     """
 
     def __init__(
@@ -75,7 +75,7 @@ class AlphaPitPipeline:
         storage_adapter: Optional[PithosStorageAdapter] = None,
         device: Optional[str] = None,
         concurrency: int = 1,
-        throttle_sleep_ms: float = 20.0,
+        throttle_sleep_ms: float = 15.0,
     ) -> None:
         self.device = device or ("mps" if torch.backends.mps.is_available() else "cpu")
         self.concurrency = max(1, concurrency)
@@ -122,14 +122,12 @@ class AlphaPitPipeline:
 
         return surface, output
 
-    async def process_single_metadata_item(
+    async def _prefetch_structure_data(
         self,
         meta: AlphaFoldMetadata,
         min_plddt: float = 0.0,
-    ) -> Optional[Tuple[np.ndarray, List[SurfaceVectorRecord]]]:
-        """
-        Stream and process a single AlphaFold protein with immediate memory release.
-        """
+    ) -> Optional[Tuple[AlphaFoldMetadata, ProteinStructureData]]:
+        """Download and parse structure in RAM asynchronously in prefetch queue."""
         try:
             cif_url = meta.cif_url
             if not cif_url or "_v4.cif" in cif_url:
@@ -147,7 +145,17 @@ class AlphaPitPipeline:
             )
             if struct_data.num_atoms < 10:
                 return None
+            return meta, struct_data
+        except Exception:
+            return None
 
+    def process_structure_data(
+        self,
+        meta: AlphaFoldMetadata,
+        struct_data: ProteinStructureData,
+    ) -> Optional[Tuple[np.ndarray, List[SurfaceVectorRecord]]]:
+        """Process pre-fetched structure data on GPU/MPS with instant memory release."""
+        try:
             pc = ProteinPointCloud.from_structure_data(struct_data, device=self.device)
             surface = self.feature_extractor.extract(pc)
 
@@ -173,13 +181,7 @@ class AlphaPitPipeline:
                     )
                 )
 
-            # Instant memory cleanup
-            del struct_data, pc, surface, output
-
-            # Gentle thermal throttle
-            if self.throttle_sleep_ms > 0:
-                await asyncio.sleep(self.throttle_sleep_ms / 1000.0)
-
+            del pc, surface, output
             return embs, metadata_records
         except Exception:
             return None
@@ -215,8 +217,7 @@ class AlphaPitPipeline:
         show_progress: bool = True,
     ) -> Tuple[List[Path], PipelineMetrics]:
         """
-        Deterministic, low-impact streaming pipeline designed for fanless Apple Silicon.
-        Flushes to SSD in bounded shards and enforces zero RAM accumulation.
+        Pipelined streaming pipeline with async network prefetching and single-worker GPU inference.
         """
         self._apply_thermal_governor()
         metrics = PipelineMetrics()
@@ -235,6 +236,9 @@ class AlphaPitPipeline:
         total_expected = limit if limit is not None else 20400
         pbar = tqdm(total=total_expected, desc="Streaming Proteome", disable=not show_progress)
 
+        # Bounded prefetch queue (holds at most 3 pre-downloaded structures in RAM)
+        prefetch_queue: asyncio.Queue[Optional[Tuple[AlphaFoldMetadata, ProteinStructureData]]] = asyncio.Queue(maxsize=3)
+
         def flush_shard():
             nonlocal structures_in_current_shard, shard_idx
             if not current_shard_embeddings:
@@ -243,7 +247,6 @@ class AlphaPitPipeline:
             shard_name = f"{index_name}_shard_{shard_idx:04d}"
             combined = np.vstack(current_shard_embeddings)
 
-            # Assign contiguous record IDs within shard
             indexed_meta = []
             rec_offset = 0
             for meta_rec in current_shard_metadata:
@@ -266,28 +269,50 @@ class AlphaPitPipeline:
             )
             shard_idx += 1
 
-            # Clear memory immediately
             current_shard_embeddings.clear()
             current_shard_metadata.clear()
             structures_in_current_shard = 0
 
-            # Force garbage collection & MPS cache release
             if torch.backends.mps.is_available():
                 torch.mps.empty_cache()
             gc.collect()
 
-        # Producer & Sequential Processor (1 worker, zero thread fighting)
-        processed_count = 0
-        async for meta in self.downloader.stream_uniprot_proteome(
-            organism_tax_id=organism_tax_id, limit=limit
-        ):
-            metrics.total_structures_attempted += 1
+        # Producer Task: Streams UniProt and prefetches CIF files across HTTP/2
+        async def producer():
+            produced = 0
+            async for meta in self.downloader.stream_uniprot_proteome(
+                organism_tax_id=organism_tax_id, limit=limit
+            ):
+                metrics.total_structures_attempted += 1
+                if meta.uniprot_accession in processed_ids:
+                    pbar.update(1)
+                    continue
 
-            if meta.uniprot_accession in processed_ids:
-                pbar.update(1)
-                continue
+                item = await self._prefetch_structure_data(meta, min_plddt=min_plddt)
+                if item is not None:
+                    await prefetch_queue.put(item)
+                    produced += 1
+                else:
+                    pbar.update(1)
 
-            res = await self.process_single_metadata_item(meta, min_plddt=min_plddt)
+                if limit and produced >= limit:
+                    break
+
+            await prefetch_queue.put(None)  # Poison pill
+
+        producer_task = asyncio.create_task(producer())
+
+        # Consumer Loop: Single-stream GPU inference with 0 network latency
+        while True:
+            item = await prefetch_queue.get()
+            if item is None:
+                prefetch_queue.task_done()
+                break
+
+            meta, struct_data = item
+            res = self.process_structure_data(meta, struct_data)
+            del struct_data
+
             if res is not None:
                 embs, meta_list = res
                 current_shard_embeddings.append(embs)
@@ -296,7 +321,7 @@ class AlphaPitPipeline:
                 structures_in_current_shard += 1
                 metrics.total_structures_succeeded += 1
                 metrics.total_surface_patches += embs.shape[0]
-                metrics.total_network_bytes += 80 * 1024
+                metrics.total_network_bytes += 60 * 1024
 
                 rate_struct = metrics.structures_per_second
                 rate_vec = metrics.patches_per_second
@@ -315,13 +340,14 @@ class AlphaPitPipeline:
                     self._save_checkpoint(checkpoint_file, processed_ids)
 
             pbar.update(1)
-            processed_count += 1
-            if limit and processed_count >= limit:
-                break
+            prefetch_queue.task_done()
 
+            if self.throttle_sleep_ms > 0:
+                await asyncio.sleep(self.throttle_sleep_ms / 1000.0)
+
+        await producer_task
         pbar.close()
 
-        # Flush any remaining items in buffer
         if current_shard_embeddings:
             flush_shard()
             self._save_checkpoint(checkpoint_file, processed_ids)
@@ -394,3 +420,14 @@ class AlphaPitPipeline:
         """Search for matching surface patches in PithosDB using outputs from a query protein."""
         queries = query_surface_output.patch_embeddings.detach().cpu().numpy()
         return self.storage.search(index_name=index_name, query_vectors=queries, k=k)
+
+    def search_similar_patches_all_shards(
+        self,
+        query_surface_output: dMaSIFOutput,
+        shard_prefix: str = "human_proteome_9606_shard_",
+        k: int = 5,
+    ) -> List[List[SurfaceQueryResult]]:
+        """Search for matching surface patches across ALL compiled PithosDB shards on SSD."""
+        queries = query_surface_output.patch_embeddings.detach().cpu().numpy()
+        return self.storage.search_all_shards(query_vectors=queries, shard_prefix=shard_prefix, k=k)
+

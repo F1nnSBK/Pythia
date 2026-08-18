@@ -9,12 +9,17 @@ import asyncio
 import os
 import shutil
 import sys
+import time
+from collections import defaultdict
 from pathlib import Path
+from typing import Dict, List
+import numpy as np
 import torch
 
 from alphapit.config import settings
 from alphapit.download.client import PDBStreamDownloader
 from alphapit.pipeline import AlphaPitPipeline
+from alphapit.storage.adapter import SurfaceQueryResult
 
 
 def cmd_status(args: argparse.Namespace) -> None:
@@ -31,6 +36,11 @@ def cmd_status(args: argparse.Namespace) -> None:
 
     print(f"Index Storage Path: {settings.full_index_path}")
     print(f"Temporary Buffer:   {settings.full_temp_path}")
+
+    # Shard inventory
+    shards = sorted(settings.full_index_path.glob("*.pithos"))
+    total_shard_bytes = sum(s.stat().st_size for s in shards)
+    print(f"Compiled Shards:    {len(shards)} container files ({total_shard_bytes / (1024*1024):.1f} MB)")
 
     # Compute Device
     if torch.backends.mps.is_available():
@@ -67,6 +77,70 @@ async def _run_search(args: argparse.Namespace) -> None:
 
 def cmd_search(args: argparse.Namespace) -> None:
     asyncio.run(_run_search(args))
+
+
+async def _run_search_proteome(args: argparse.Namespace) -> None:
+    pipeline = AlphaPitPipeline()
+    t0 = time.perf_counter()
+
+    print("=== AlphaPit Multi-Shard Proteome Pocket Search ===")
+    print(f"Query Target:       {args.query_id} (format={args.format})")
+    print(f"Target Storage:     {settings.full_index_path}")
+
+    shards = pipeline.storage.list_available_shards(prefix=args.shard_prefix)
+    print(f"Available Shards:   {len(shards)} (.pithos containers on SSD)")
+    if not shards:
+        print("Error: No compiled shards found on storage.")
+        return
+
+    print("Streaming query structure into memory & computing 21-D surface features...")
+    surface, output = await pipeline.stream_and_process_structure(
+        args.query_id, is_alphafold=args.alphafold, file_format=args.format
+    )
+    t_feat = time.perf_counter()
+    print(f"Extracted {surface.num_points} query surface patches in {t_feat - t0:.2f}s.")
+
+    print(f"Executing SIMD multi-shard search across all {len(shards)} shards (top {args.top_k} per patch)...")
+    t_search_start = time.perf_counter()
+    all_patch_matches = pipeline.search_similar_patches_all_shards(
+        output, shard_prefix=args.shard_prefix, k=args.top_k
+    )
+    t_search_end = time.perf_counter()
+    search_ms = (t_search_end - t_search_start) * 1000.0
+    print(f"Search completed in {search_ms:.1f} ms across {len(shards)} shards!")
+
+    # Aggregate target proteins
+    target_hits: Dict[str, List[SurfaceQueryResult]] = defaultdict(list)
+    for q_idx, matches in enumerate(all_patch_matches):
+        for m in matches:
+            if m.structure_id:
+                target_hits[m.structure_id].append(m)
+
+    # Rank targets by number of patch hits and best alignment score
+    ranked_targets = sorted(
+        target_hits.items(),
+        key=lambda item: (len(item[1]), -np.mean([m.score for m in item[1]])),
+        reverse=True,
+    )
+
+    print("\n" + "=" * 78)
+    print(f"TOP HUMAN PROTEOME MATCHES FOR QUERY: {args.query_id}")
+    print("=" * 78)
+    print(f"{'Rank':<5} | {'UniProt ID':<12} | {'Matching Patches':<18} | {'Best Score':<12} | {'Sample Residues'}")
+    print("-" * 78)
+
+    for rank, (target_id, hit_list) in enumerate(ranked_targets[: args.max_targets], 1):
+        best_score = min(m.score for m in hit_list)
+        unique_res = sorted(set(m.res_seq for m in hit_list if m.res_seq is not None))[:6]
+        res_str = ", ".join(f"Res {r}" for r in unique_res)
+        print(f"{rank:<5} | {target_id:<12} | {len(hit_list):<18} | {best_score:<12.1f} | {res_str}")
+
+    print("=" * 78)
+    print(f"Total query execution time: {time.perf_counter() - t0:.2f} s")
+
+
+def cmd_search_proteome(args: argparse.Namespace) -> None:
+    asyncio.run(_run_search_proteome(args))
 
 
 async def _run_proteome(args: argparse.Namespace) -> None:
@@ -129,14 +203,24 @@ def main() -> None:
     p_prot.add_argument("--throttle-ms", type=float, default=20.0, help="Inter-structure cooldown in milliseconds")
     p_prot.set_defaults(func=cmd_proteome)
 
-    # search
-    p_srch = subparsers.add_parser("search", help="Search compiled PithosDB index with query structure")
+    # search (single shard)
+    p_srch = subparsers.add_parser("search", help="Search a single compiled PithosDB shard container")
     p_srch.add_argument("name", help="Name of the PithosDB index or shard")
     p_srch.add_argument("query_id", help="Query PDB ID or UniProt ID")
     p_srch.add_argument("--top-k", type=int, default=5, help="Number of nearest neighbors to retrieve")
     p_srch.add_argument("--alphafold", action="store_true", help="Query is an AlphaFold ID")
     p_srch.add_argument("--format", choices=["pdb", "cif"], default="pdb", help="Structure format")
     p_srch.set_defaults(func=cmd_search)
+
+    # search-proteome (all shards on SSD)
+    p_all = subparsers.add_parser("search-proteome", help="Search across ALL compiled proteome shards on SSD")
+    p_all.add_argument("query_id", help="Query PDB ID (e.g. 1M17, 1A8O, 6LU7) or UniProt ID")
+    p_all.add_argument("--shard-prefix", default="human_proteome_9606_shard_", help="Prefix for shard containers")
+    p_all.add_argument("--top-k", type=int, default=3, help="Top matches per surface patch")
+    p_all.add_argument("--max-targets", type=int, default=10, help="Maximum ranked human targets to display")
+    p_all.add_argument("--alphafold", action="store_true", help="Query is an AlphaFold UniProt ID")
+    p_all.add_argument("--format", choices=["pdb", "cif"], default="pdb", help="Structure format")
+    p_all.set_defaults(func=cmd_search_proteome)
 
     args = parser.parse_args()
     args.func(args)
