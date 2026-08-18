@@ -25,6 +25,7 @@ class MolecularSurface:
     res_indices: torch.Tensor  # Shape: (P,), int64 (nearest residue index)
     chemical_features: torch.Tensor  # Shape: (P, D_chem)
     curvature_features: Optional[torch.Tensor] = None  # Shape: (P, D_curv)
+    laplacian_features: Optional[torch.Tensor] = None  # Shape: (P, D_lbo)
 
     @property
     def num_points(self) -> int:
@@ -42,6 +43,11 @@ class MolecularSurface:
             curvature_features=(
                 self.curvature_features.to(device)
                 if self.curvature_features is not None
+                else None
+            ),
+            laplacian_features=(
+                self.laplacian_features.to(device)
+                if self.laplacian_features is not None
                 else None
             ),
         )

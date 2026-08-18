@@ -28,11 +28,13 @@ class dMaSIFOutput:
 class dMaSIFNet(nn.Module):
     """
     End-to-end geometric deep learning model operating directly on raw molecular surfaces.
+    Processes dual-fingerprints: chemical potentials, multi-scale extrinsic curvatures,
+    and intrinsic Laplace-Beltrami spectral features.
     """
 
     def __init__(
         self,
-        in_channels: int = 17,  # 7 chemical + 10 multi-scale curvature features
+        in_channels: int = 21,  # 7 chemical + 10 multi-scale curvature + 4 Laplace-Beltrami HKS
         hidden_dim: int = 64,
         embedding_dim: int = 384,
         num_layers: int = 3,
