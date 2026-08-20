@@ -1,8 +1,8 @@
-# AlphaPit: Proteome-Wide 3D Pocket Search
+# Pythia: Proteome-Wide 3D Pocket Search
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python: 3.12](https://img.shields.io/badge/Python-3.12-brightgreen.svg)](https://www.python.org/)
-[![Hardware: Consumer Ready](https://img.shields.io/badge/RAM-0.28%20GB-orange.svg)](https://github.com/pithos-bio/pithos-lbo)
+[![Hardware: Consumer Ready](https://img.shields.io/badge/RAM-0.28%20GB-orange.svg)](https://github.com/F1nnSBK/Pythia)
 
 Official companion code and reproducibility repository for the paper:
 > **"Proteome-Wide 3D Pocket Search via LBO-dMaSIF Surface Embeddings and Zero-Copy Bit-Sliced Cascades"**  
@@ -13,7 +13,7 @@ Official companion code and reproducibility repository for the paper:
 
 ## Key Highlights & Scientific Metrics
 
-| Benchmark Metric | Traditional Vector DB (FAISS Flat / HNSW-32) | AlphaPit (LBO-dMaSIF + PithosDB) |
+| Benchmark Metric | Traditional Vector DB (FAISS Flat / HNSW-32) | Pythia (LBO-dMaSIF + PithosDB) |
 | :--- | :--- | :--- |
 | **Resident RAM (38.2M Vectors)** | $57.5\text{ GB} - 74.1\text{ GB}$ (OOM on Laptops) | **$0.28\text{ GB}$** (Zero-Copy POSIX `mmap`) |
 | **Query Latency** | $236.8\text{ ms}$ (Flat) / $1.67\text{ ms}$ ($16\%$ Recall) | **$24.1\text{ ms}$** ($10\times$ faster than Flat) |
