@@ -1,8 +1,8 @@
-# AlphaPit: Proteome-Wide 3D Pocket Search
+# Pythia: Proteome-Wide 3D Pocket Search
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python: 3.12](https://img.shields.io/badge/Python-3.12-brightgreen.svg)](https://www.python.org/)
-[![Hardware: Consumer Ready](https://img.shields.io/badge/RAM-0.28%20GB-orange.svg)](https://github.com/pithos-bio/pithos-lbo)
+[![Hardware: Consumer Ready](https://img.shields.io/badge/RAM-0.28%20GB-orange.svg)](https://github.com/F1nnSBK/Pythia)
 
 Official companion code and reproducibility repository for the paper:
 > **"Proteome-Wide 3D Pocket Search via LBO-dMaSIF Surface Embeddings and Zero-Copy Bit-Sliced Cascades"**  

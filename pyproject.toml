@@ -3,20 +3,20 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "alphapit"
-version = "0.1.0"
-description = "End-to-end geometric deep learning on protein surfaces with streaming download and Pithos vector index"
+name = "pythia-bio"
+version = "1.0.0"
+description = "Proteome-Wide 3D Pocket Search via LBO-dMaSIF Surface Embeddings and Zero-Copy Bit-Sliced Cascades"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
+license = { text = "MIT" }
 authors = [
-    { name = "AlphaPit Contributors" }
+    { name = "Finn Hertsch", email = "hertsch.finn-24@stud.dhbw-ravensburg.de" }
 ]
 keywords = [
     "protein-surfaces",
     "geometric-deep-learning",
+    "laplace-beltrami",
     "dmasif",
-    "vector-database",
     "pithosdb",
     "structural-bioinformatics"
 ]
@@ -30,7 +30,6 @@ dependencies = [
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "tqdm>=4.65.0",
-    "pithosdb>=1.2.0",
 ]
 
 [project.optional-dependencies]
@@ -40,6 +39,7 @@ dev = [
 ]
 
 [project.scripts]
+pythia = "alphapit.cli:main"
 alphapit = "alphapit.cli:main"
 
 [tool.setuptools.packages.find]
