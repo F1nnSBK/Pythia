@@ -1,0 +1,8 @@
+metric,value,unit_or_description
+total_proteome_structures,25379,Unique canonical proteins (Human + Yeast)
+total_surface_vectors,38263890,384-D geometric dMaSIF patch embeddings
+sampled_pocket_centers,13500,Concave binding pockets analyzed
+universal_hubs_count,13500,Pockets shared across >= 15 protein folds
+twilight_pairs_count,6748,Pockets with similarity > 0.80 and sequence identity < 20%
+twilight_percentage,33.3,% of high-similarity pocket matches in BLAST blind zone
+clean_drug_targets_count,0,Unique pockets with zero high-similarity off-targets

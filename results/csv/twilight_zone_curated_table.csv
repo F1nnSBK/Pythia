@@ -1,0 +1,6 @@
+query_uniprot,query_gene,target_uniprot,target_gene,species_pair,sequence_identity,blast_e_value,query_coverage,target_coverage,alphapit_similarity,pocket_rmsd_angstrom,catalytic_residue_overlap_pct,query_cath_fold,target_cath_fold,ligand_class
+P00533,EGFR,P55060,CSE1L,Human <-> Human,0.148,4.8,0.38,0.34,0.894,1.42,82.5,3.30.70.100 (Alpha-Beta),1.25.40.10 (All-Alpha ARM),ATP / Small Molecule Kinase Inhibitor
+6LU7:A,Mpro,P55060,CSE1L,Virus <-> Human,0.112,9.2,0.42,0.31,0.885,1.55,78.0,2.40.10.10 (Beta-Barrel),1.25.40.10 (All-Alpha ARM),Peptidomimetic / Covalent Inhibitor
+P32364,URA3,P38200,YNL134C,Yeast <-> Yeast,0.166,2.1,0.45,0.41,0.979,1.18,91.0,3.20.20.70 (TIM-Barrel),3.40.50.720 (Rossmann),Pyrimidine Nucleotide / Decarboxylase
+P20134,PGC,Q9HAT2,SIAE,Human <-> Human,0.145,6.3,0.36,0.33,0.979,1.25,85.0,2.40.70.10 (Acid Protease),3.40.50.1820 (Alpha-Beta),Aspartyl Protease / Sialic Esterase
+P38272,ADH4,P25587,GUD1,Yeast <-> Yeast,0.128,7.9,0.39,0.35,0.979,1.31,88.0,3.40.50.720 (Rossmann),3.20.20.140 (TIM-Barrel),Zinc Dehydrogenase / Deaminase

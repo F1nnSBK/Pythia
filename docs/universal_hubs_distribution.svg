@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 360" width="780" height="360">
+<rect width="780" height="360" fill="#ffffff"/>
+<style>
+  text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 11px; fill: #222222; }
+  .axis-line { stroke: #333333; stroke-width: 1.0; stroke-linecap: square; }
+  .grid-tick { stroke: #333333; stroke-width: 1.0; }
+</style>
+<line class="axis-line" x1="290" y1="45" x2="290" y2="285"/>
+<line class="axis-line" x1="290" y1="285" x2="720" y2="285"/>
+<line class="grid-tick" x1="290.0" y1="285" x2="290.0" y2="290"/>
+<text x="290.0" y="303" text-anchor="middle">0</text>
+<line class="grid-tick" x1="385.55555555555554" y1="285" x2="385.55555555555554" y2="290"/>
+<text x="385.55555555555554" y="303" text-anchor="middle">1,000</text>
+<line class="grid-tick" x1="481.1111111111111" y1="285" x2="481.1111111111111" y2="290"/>
+<text x="481.1111111111111" y="303" text-anchor="middle">2,000</text>
+<line class="grid-tick" x1="576.6666666666666" y1="285" x2="576.6666666666666" y2="290"/>
+<text x="576.6666666666666" y="303" text-anchor="middle">3,000</text>
+<line class="grid-tick" x1="672.2222222222222" y1="285" x2="672.2222222222222" y2="290"/>
+<text x="672.2222222222222" y="303" text-anchor="middle">4,000</text>
+<rect x="290" y="56" width="367.1" height="26" fill="#1e3a8a"/>
+<text x="278" y="73" text-anchor="end">Universal ATP-Binding P-Loop / Kinase Hub</text>
+<text x="665.1244444444444" y="73">3,842 Pockets</text>
+<rect x="290" y="104" width="262.8" height="26" fill="#0284c7"/>
+<text x="278" y="121" text-anchor="end">Rossmann Dinucleotide / NAD(P)H Hub</text>
+<text x="560.7777777777778" y="121">2,750 Pockets</text>
+<rect x="290" y="152" width="203.5" height="26" fill="#0d9488"/>
+<text x="278" y="169" text-anchor="end">Ser/Cys/His Catalytic Hydrolysis Triad</text>
+<text x="501.5333333333333" y="169">2,130 Pockets</text>
+<rect x="290" y="200" width="134.1" height="26" fill="#ca8a04"/>
+<text x="278" y="217" text-anchor="end">Tetrahedral Metallo-Ion Coordination Center</text>
+<text x="432.06444444444446" y="217">1,403 Pockets</text>
+<rect x="290" y="248" width="322.5" height="26" fill="#64748b"/>
+<text x="278" y="265" text-anchor="end">Unique Isolated Targets (Clean Pharma Sites)</text>
+<text x="620.5" y="265">3,375 Pockets</text>
+<text x="505.0" y="345" text-anchor="middle" font-size="12">Frequency of Discovered Universal Binding Pocket Archetypes across 25,379 Proteomes</text>
+</svg>

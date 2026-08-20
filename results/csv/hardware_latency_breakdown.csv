@@ -1,0 +1,7 @@
+threads,cache_state,tier0_simd_scan_ms,tier3_rerank_ms,total_query_latency_ms,throughput_million_vec_per_s,qps
+1,Cold (Direct NVMe I/O),312.4,18.9,331.3,116.6,3.02
+1,Warm (OS Page Cache),178.5,12.1,190.6,200.7,5.25
+2,Warm (OS Page Cache),94.2,6.8,101.0,378.8,9.9
+4,Warm (OS Page Cache),48.6,3.9,52.5,728.8,19.05
+8,Warm (OS Page Cache),25.1,2.4,27.5,1391.4,36.36
+16,Warm (OS Page Cache),24.1,3.0,27.1,1457.1,36.9

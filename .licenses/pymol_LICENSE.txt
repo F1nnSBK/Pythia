@@ -1,0 +1,3 @@
+PyMOL Open-Source License Notice
+Timestamp: 2026-08-20T17:51:50Z
+Notification: PyMOL is used under the open-source license. Please review terms at https://www.pymol.org/

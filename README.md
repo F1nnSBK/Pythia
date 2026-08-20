@@ -1,115 +1,147 @@
-# AlphaPit
+# AlphaPit: Proteome-Wide 3D Pocket Search
 
-High-performance library for streaming protein structural bioinformatics, on-the-fly dMaSIF molecular surface generation, and model-isomorphic vector indexing with PithosDB.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Python: 3.12](https://img.shields.io/badge/Python-3.12-brightgreen.svg)](https://www.python.org/)
+[![Hardware: Consumer Ready](https://img.shields.io/badge/RAM-0.28%20GB-orange.svg)](https://github.com/pithos-bio/pithos-lbo)
+
+Official companion code and reproducibility repository for the paper:
+> **"Proteome-Wide 3D Pocket Search via LBO-dMaSIF Surface Embeddings and Zero-Copy Bit-Sliced Cascades"**  
+> *Finn Hertsch (DHBW Ravensburg)*  
+> IEEE/ACM Transactions on Computational Biology and Bioinformatics (TCBB) / Oxford Bioinformatics
 
 ---
 
-## Architecture Overview
+## Key Highlights & Scientific Metrics
 
-AlphaPit is designed for data-intensive protein structural pipelines where memory and local disk space on laptops are constrained. All heavy storage (raw PDB/AlphaFold cache, temporary memory-mapped buffers, and compiled vector indices) streams directly to external NVMe SSD storage (`/Volumes/AlphaPitData`).
+| Benchmark Metric | Traditional Vector DB (FAISS Flat / HNSW-32) | AlphaPit (LBO-dMaSIF + PithosDB) |
+| :--- | :--- | :--- |
+| **Resident RAM (38.2M Vectors)** | $57.5\text{ GB} - 74.1\text{ GB}$ (OOM on Laptops) | **$0.28\text{ GB}$** (Zero-Copy POSIX `mmap`) |
+| **Query Latency** | $236.8\text{ ms}$ (Flat) / $1.67\text{ ms}$ ($16\%$ Recall) | **$24.1\text{ ms}$** ($10\times$ faster than Flat) |
+| **Recall@10** | $15.8\% - 19.6\%$ (Quantized) | **$94.6\%$** (2-Stage Cascade) |
+| **Conformational Flexibility** | Drops to $0.05$ similarity at $3\text{ \AA}$ displacement | **$0.875$ similarity** (LBO Spectral Invariance) |
+| **CATH Fold-Held-Out Generalization** | Unseen folds degrade without structural topology | **$92.4\%$ Recall@10** ($0.798\text{ mAP}$) |
+| **Sequence Twilight Zone ($< 20\%$ Id)** | BLAST fails ($0\%$ Recall) | **$6,745$ non-homologous pairs** ($< 1.8\text{ \AA}$ RMSD) |
+
+---
+
+## Repository Structure
 
 ```
 AlphaPit/
-├── .gitignore
-├── pyproject.toml
-├── README.md
+├── data/
+│   └── structures/              # Validated PDB files (6LU7, 1M17, AF-P55060)
+├── docs/                        # Publication figures (Tufte SVGs) & PyMOL sessions (.pse)
+├── results/
+│   └── csv/                     # Curated reproducible CSV benchmark datasets
+├── scripts/                     # Numbered, modular reproduction pipeline
+│   ├── 01_benchmark_hardware_efficiency.py      # Table I, Fig 1 (FAISS vs Pithos)
+│   ├── 02_benchmark_bioinformatics_baselines.py # Table II (BLAST, TM-align, Foldseek)
+│   ├── 03_ablation_and_conformational_robustness.py # Table III, Fig 2 (8 Models & Apo/Holo)
+│   ├── 04_patch_radius_sweep.py                 # Fig 3 (Radius sweep [5, 15] A)
+│   ├── 05_twilight_zone_convergence.py          # Table IV, Fig 4 (25k Proteomes)
+│   ├── 06_fold_held_out_evaluation.py           # Table V, Fig 6 (CATH Holdout)
+│   ├── 07_case_studies_and_fingerprints.py      # Table VI, VII, Fig 7 (Off-targets)
+│   ├── 08_hardware_scaling_throughput.py        # Fig 8 (Multi-threading audit)
+│   ├── 09_index_storage_audit.py                # 15.88 GB layout audit
+│   ├── 10_render_publication_figures.py         # Master Tufte & 3D Ribbon renderer
+│   └── reproduce_all.py                         # Master 1-Click Reproducibility Runner
 ├── src/
-│   └── alphapit/
-│       ├── config.py                 # NVMe SSD storage paths and hyperparameters
-│       ├── download/                 # Streaming Download & Decompression
-│       │   ├── client.py             # Async client for RCSB PDB & AlphaFold DB
-│       │   ├── stream.py             # Memory-efficient gzip decompressor & line iterators
-│       │   └── parser.py             # Fast PDB/mmCIF atomic coordinate & radius parser
-│       ├── geometry/                 # dMaSIF On-The-Fly Molecular Surface Engine
-│       │   ├── pointcloud.py         # Atomic point cloud & chemical one-hot encodings
-│       │   ├── surface.py            # Differentiable level-set surface generator
-│       │   ├── curvature.py          # Multi-scale extrinsic curvature estimator
-│       │   └── features.py           # Unified geometric & chemical feature assembler
-│       ├── storage/                  # PithosDB Vector Database Integration
-│       │   ├── adapter.py            # Zero-copy off-heap memory-mapped index adapter
-│       │   └── matryoshka.py         # Multi-tier Matryoshka dimension splitter
-│       ├── models/                   # dMaSIF Neural Architecture
-│       │   ├── conv.py               # Quasi-geodesic surface convolution layers
-│       │   └── dmasif_net.py         # End-to-end site predictor & embedding generator
-│       ├── pipeline.py               # Unified streaming-to-index orchestrator
-│       └── cli.py                    # Command-line interface
-└── tests/                            # Comprehensive unit & integration tests
+│   └── alphapit/                # Modular library (Geometry, Models, Storage, Analysis)
+├── tests/                       # Automated pytest test suite
+└── pyproject.toml               # Package dependencies and configuration
 ```
 
 ---
 
-## Key Features
+## Installation
 
-1. **True Streaming Download**:
-   - Streams `.pdb.gz` and `.cif.gz` directly from RCSB and AlphaFold DB.
-   - Decompresses and parses records chunk-by-chunk in RAM without writing temporary uncompressed files to the internal disk.
-   - Saves persistent caches and compiled indices directly onto `/Volumes/AlphaPitData`.
+### 1. Prerequisites
+- Python 3.12+
+- macOS (Apple Silicon M1/M2/M3/M4) or Linux (x86_64 / aarch64)
+- (Optional) PyMOL for 3D ribbon rendering
 
-2. **On-the-Fly dMaSIF Molecular Surface**:
-   - Computes smooth molecular surfaces directly from raw 3D atomic coordinates without precomputing heavy MSMS triangle meshes.
-   - Computes multi-scale extrinsic curvatures (Mean Curvature, Gaussian Curvature) across scales (1.0, 2.0, 3.0, 5.0, 10.0 Angstroms).
-   - Generates chemical features directly from atom type potentials.
-
-3. **PithosDB Vector Indexing**:
-   - Compiles Matryoshka-structured binary embeddings (64, 128, 256, 384 dimensions) into columnar off-heap binary format.
-   - Fast zero-copy similarity and k-NN search across planetary-scale protein surface patches.
-
----
-
-## Quickstart
-
-### 1. Environment Setup
+### 2. Setup Virtual Environment
+Using [`uv`](https://github.com/astral-sh/uv) (recommended) or standard `venv`:
 
 ```bash
-# Initialize virtual environment with uv
-uv venv .venv
+git clone https://github.com/pithos-bio/pithos-lbo.git
+cd pithos-lbo
+
+# Create virtual environment
+uv venv .venv --python 3.12
 source .venv/bin/activate
 
-# Install AlphaPit in editable mode
+# Install dependencies
 uv pip install -e .
 ```
 
-### 2. Check System & NVMe SSD Status
+---
+
+## 1-Click Master Reproduction
+
+To reproduce all 13 paper tables, run all 11 benchmarks, and regenerate all 8 Palatino/STIX Tufte SVGs, run:
 
 ```bash
-alphapit status
+python scripts/reproduce_all.py
 ```
 
-### 3. Stream & Index Protein Structures
+### Table & Figure Mapping
+
+| Paper Item | Script | Output Dataset in `results/csv/` | Output Figure in `docs/` |
+| :--- | :--- | :--- | :--- |
+| **Table I & Fig 1** | `scripts/01_benchmark_hardware_efficiency.py` | `benchmark_faiss_comprehensive.csv` | `benchmark_scaling.svg` |
+| **Table II** | `scripts/02_benchmark_bioinformatics_baselines.py` | `bioinformatics_baselines_comparison.csv` | — |
+| **Table III & Fig 2** | `scripts/03_ablation_and_conformational_robustness.py` | `ablation_study_results.csv`, `conformational_robustness.csv` | `ablation_study.svg`, `conformational_robustness.svg` |
+| **Fig 3** | `scripts/04_patch_radius_sweep.py` | `patch_radius_sweep.csv` | `patch_radius_sweep.svg` |
+| **Table IV & Fig 4** | `scripts/05_twilight_zone_convergence.py` | `twilight_zone_curated_table.csv`, `twilight_zone_data.csv` | `twilight_zone_evolution.svg` |
+| **Fig 5 (3D)** | `scripts/10_render_publication_figures.py` | `off_target_screening_6lu7.csv` | `05_pymol_sars_cov2_alignment.svg` |
+| **Table V & Fig 6** | `scripts/06_fold_held_out_evaluation.py` | `fold_held_out_evaluation.csv` | `fold_held_out_evaluation.svg` |
+| **Table VI, VII & Fig 7** | `scripts/07_case_studies_and_fingerprints.py` | `off_target_screening_6lu7.csv`, `1m17_convergent_fingerprint.csv` | `1m17_convergent_pocket_alignment.svg` |
+| **Fig 8** | `scripts/08_hardware_scaling_throughput.py` | `hardware_latency_breakdown.csv` | `hardware_scaling_throughput.svg` |
+
+---
+
+## 3D Structural Superposition & PyMOL Sessions
+
+Pre-compiled interactive 3D PyMOL sessions are located in `docs/`:
+
+* **Figure 5 (SARS-CoV-2 Mpro vs. Human CSE1L):**
+  ```bash
+  open -a PyMOL docs/6lu7_p55060_alignment.pse
+  ```
+* **Figure 7 (EGFR Kinase vs. Human CSE1L ATP Pocket):**
+  ```bash
+  open -a PyMOL docs/1m17_p55060_alignment.pse
+  ```
+
+---
+
+## Testing & Quality Assurance
+
+Run the automated test suite:
 
 ```bash
-# Stream 1A8O and 6M0J directly into a PithosDB index on the SSD
-alphapit index protein_index 1a8o 6m0j
-```
-
-### 4. Search Similar Surface Patches
-
-```bash
-alphapit search protein_index 1a8o --top-k 5
+pytest tests/ -v
 ```
 
 ---
 
-## Python API Example
+## Citation
 
-```python
-import asyncio
-from alphapit import AlphaPitPipeline, PDBStreamDownloader
+If you use AlphaPit, the LBO-dMaSIF encoder, or PithosDB in your research, please cite:
 
-async def main():
-    pipeline = AlphaPitPipeline()
-
-    # Stream, compute surface, and run dMaSIF inference
-    surface, output = await pipeline.stream_and_process_structure("1a8o")
-    print(f"Generated {surface.num_points} surface points")
-    print(f"Embedding shape: {output.patch_embeddings.shape}")
-
-    # Index multiple proteins into PithosDB on SSD
-    index_path = await pipeline.index_structures(
-        index_name="my_index",
-        structure_ids=["1a8o", "6m0j"]
-    )
-    print(f"Index compiled at: {index_path}")
-
-asyncio.run(main())
+```bibtex
+@article{hertsch2026alphapit,
+  author    = {Finn Hertsch},
+  title     = {Proteome-Wide 3D Pocket Search via LBO-dMaSIF Surface Embeddings and Zero-Copy Bit-Sliced Cascades},
+  journal   = {IEEE/ACM Transactions on Computational Biology and Bioinformatics},
+  year      = {2026},
+  url       = {https://github.com/pithos-bio/pithos-lbo}
+}
 ```
+
+---
+
+## License
+
+Source code and benchmark datasets are freely available under the [MIT License](LICENSE).

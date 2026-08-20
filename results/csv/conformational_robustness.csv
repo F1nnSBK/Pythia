@@ -1,0 +1,6 @@
+displacement_nm,rmsd_angstrom,euclidean_coords_similarity,dmasif_standard_similarity,lbo_hks_intrinsic_similarity,alphapit_full_similarity
+0.05,0.5,0.92,0.94,0.985,0.992
+0.1,1.0,0.65,0.78,0.945,0.968
+0.2,2.0,0.21,0.45,0.865,0.915
+0.3,3.0,0.05,0.22,0.795,0.875
+0.4,4.0,0.01,0.15,0.76,0.844

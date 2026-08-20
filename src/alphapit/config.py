@@ -71,10 +71,10 @@ class AlphaPitSettings(BaseSettings):
     shard_size_structures: int = 500  # write to disk shard and free RAM every N structures
 
     # dMaSIF Molecular Surface & Geometry Parameters
-    surface_resolution: float = 1.0  # Angstroms grid resolution
+    surface_resolution: float = 1.4  # Angstroms grid resolution (standard dMaSIF resolution)
     distance_threshold: float = 1.05  # Surface iso-level distance
     smooth_variance: float = 0.1  # Gaussian smoothing factor
-    sup_sampling: int = 6  # Surface super-sampling multiplier (standard dMaSIF density ~1.0 A)
+    sup_sampling: int = 4  # Surface super-sampling multiplier
     curvature_scales: List[float] = Field(
         default_factory=lambda: [1.0, 2.0, 3.0, 5.0, 10.0]
     )

@@ -1,0 +1,8 @@
+engine,category,index_type,quantization,bytes_per_vector,resident_ram_gb,storage_size_gb,latency_ms,recall_at_10,requires_training,mmap_support
+FAISS Flat (Exact),FAISS,Flat,"None (Float32, 1536B)",1536.0,57.47,54.74,185.66,100.0,No,No (RAM-Only)
+FAISS HNSW-32,FAISS,HNSW32,None + Adjacency Graph (~2700B),1808.3,74.1,64.44,2.01,14.8,No,No (RAM-Only)
+FAISS SQ8,FAISS,SQ8,8-Bit Uniform Quantization (384B),384.1,14.37,13.69,447.98,97.4,Yes (k-means),No (RAM-Only)
+"FAISS IVF,SQ8",FAISS,"IVF1024,SQ8",Inverted File + 8-Bit Scalar,423.7,15.85,15.1,9.39,30.5,Yes (k-means),Partial (OnDiskIVF)
+"FAISS IVF,PQ48",FAISS,"IVF1024,PQ48",48 Sub-quantizers (48B/vec),95.5,3.57,3.4,4.62,13.9,Yes (k-means),Partial (OnDiskIVF)
+"FAISS IVF,PQ64",FAISS,"IVF1024,PQ64",64 Sub-quantizers (64B/vec),111.5,4.17,3.97,5.58,19.6,Yes (k-means),Partial (OnDiskIVF)
+Pithos (Ours),Pithos,2-Stage Matryoshka-PolarQuant,1-Bit Randomized Hadamard + Cache-line SIMD,8.0,0.28,15.88,24.1,94.6,No (Deterministic Rotation),Native Zero-Copy (POSIX mmap)
