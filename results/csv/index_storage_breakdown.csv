@@ -1,0 +1,6 @@
+segment_name,size_per_vector_bytes,total_size_gb,pct_of_total_index,working_set_status
+Tier 0 Bit-Slices (64-bit Sign),8.0,0.31,1.95,Resident in RAM (mmap working set)
+Tier 1-3 Bit-Vectors (128-384d),48.0,1.84,11.59,Paged on-demand via POSIX mmap
+Continuous Geometric Tensors (384-D),109.8,4.2,26.45,Paged for Top-1000 re-ranking
+3D Atomic Coordinates & PDB Offsets,249.1,9.53,60.01,Read on-disk for Kabsch RMSD alignment
+Total Pithos Database Index,414.9,15.88,100.0,Self-Contained 103 Shard Files on NVMe

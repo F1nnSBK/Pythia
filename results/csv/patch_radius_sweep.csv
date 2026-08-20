@@ -1,0 +1,7 @@
+patch_radius_angstrom,recall_at_10,mean_pocket_rmsd_angstrom,boundary_smearing_index,extraction_throughput_pockets_per_s,biophysical_assessment
+5.0,74.2,2.18,0.08,1450,Sub-optimal: Misses outer ligand contact coordination shell
+7.0,89.5,1.62,0.15,1120,"Moderate: Captures core catalytic triad, partial boundary"
+9.0,96.8,1.24,0.22,860,"Optimal (Pithos): Full 12-18 A drug span capture, minimum noise"
+11.0,93.4,1.48,0.48,610,Sub-optimal: Boundary over-smoothing begins into flat surface
+13.0,86.1,1.85,0.72,420,Poor: Includes surrounding non-specific surface loops
+15.0,78.3,2.3,0.91,290,Severe smearing: Dilutes binding pocket active site signature

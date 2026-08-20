@@ -7,6 +7,7 @@ structures with high concurrency and zero disk footprint.
 from __future__ import annotations
 
 import asyncio
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import AsyncIterator, Dict, List, Optional, Set
@@ -73,7 +74,7 @@ class PDBStreamDownloader:
     def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
             self._client = httpx.AsyncClient(
-                timeout=httpx.Timeout(self.timeout, connect=10.0),
+                timeout=httpx.Timeout(8.0, connect=5.0, read=8.0, write=5.0, pool=5.0),
                 follow_redirects=True,
                 limits=httpx.Limits(max_keepalive_connections=50, max_connections=100),
             )
@@ -173,11 +174,10 @@ class PDBStreamDownloader:
             # Pagination via 'link' header (rel="next")
             link_header = resp.headers.get("link")
             next_url = None
-            if link_header and 'rel="next"' in link_header:
-                for part in link_header.split(","):
-                    if 'rel="next"' in part:
-                        next_url = part.split(";")[0].strip("<> ")
-                        break
+            if link_header:
+                match = re.search(r'<([^>]+)>;\s*rel=[\"\']?next[\"\']?', link_header)
+                if match:
+                    next_url = match.group(1).strip()
 
     def build_rcsb_url(self, pdb_id: str, file_format: str = "pdb") -> str:
         """Construct standard RCSB download URL."""

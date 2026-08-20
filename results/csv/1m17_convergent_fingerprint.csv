@@ -1,0 +1,12 @@
+feature,query_1m17_egfr,target_p55060_match
+Curvature_Gauss_K,0.78,0.74
+Curvature_Mean_H,-0.85,-0.82
+Shape_Index_S,-0.92,-0.89
+Curvedness_C,0.65,0.68
+LBO_Eigen_HKS_01,0.91,0.88
+LBO_Eigen_HKS_02,0.84,0.81
+LBO_Eigen_HKS_03,0.72,0.76
+LBO_Eigen_HKS_04,0.61,0.58
+Partial_Charge,-0.45,-0.41
+HBond_Donor_Density,0.7,0.67
+Hydropathy_KyteDoolittle,0.52,0.55

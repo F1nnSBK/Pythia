@@ -1,0 +1,6 @@
+tool_name,methodology,resolution_level,index_resident_ram_gb,single_query_latency_ms,twilight_recall_at_10,cross_fold_convergence_detection,memory_mapped_support
+BLASTp / HMMER,Sequence Profiles (PSSM / HMM),Primary Sequence,0.45,180.0,0.0,Fails (< 20% Identity),No (In-Memory)
+TM-align,Dynamic Programming (Exact C-alpha),Global Backbone Topology,0.15,142000.0,42.5,Moderate (Fold Dependent),No (Pairwise Computation)
+Foldseek,3Di Vector Alphabet + k-mer Matching,Tertiary Fold Alphabet,6.8,12.5,58.2,Misses Local Non-Homologous Pockets,Yes (MMseqs2 MMAP)
+dMaSIF + FAISS,Extrinsic Surface Convolutions (FP32),3D Surface Point Cloud,74.1,0.5,71.4,Partial (Deformation Sensitive),No (RAM Bound)
+Pithos (Ours),LBO Spectral Manifold + Bit-Sliced Cascades,Intrinsic Riemannian Surface Manifold,0.28,24.1,94.6,Robust (Isometrically Invariant),Native Zero-Copy (POSIX mmap)

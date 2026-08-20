@@ -127,27 +127,37 @@ class AlphaPitPipeline:
         meta: AlphaFoldMetadata,
         min_plddt: float = 0.0,
     ) -> Optional[Tuple[AlphaFoldMetadata, ProteinStructureData]]:
-        """Download and parse structure in RAM asynchronously in prefetch queue."""
+        """Download and parse structure in RAM asynchronously with strict 10s timeout."""
         try:
-            cif_url = meta.cif_url
-            if not cif_url or "_v4.cif" in cif_url:
-                live_meta = await self.downloader.fetch_alphafold_metadata(meta.uniprot_accession)
-                if live_meta and live_meta.cif_url:
-                    cif_url = live_meta.cif_url
-                else:
-                    cif_url = f"https://alphafold.ebi.ac.uk/files/AF-{meta.uniprot_accession}-F1-model_v6.cif"
-
-            struct_data = await self.downloader.stream_and_parse_url(
-                url=cif_url,
-                structure_id=meta.uniprot_accession,
-                file_format="cif",
-                min_plddt=min_plddt,
+            return await asyncio.wait_for(
+                self._fetch_and_parse_single(meta, min_plddt=min_plddt),
+                timeout=10.0,
             )
-            if struct_data.num_atoms < 10:
-                return None
-            return meta, struct_data
         except Exception:
             return None
+
+    async def _fetch_and_parse_single(
+        self,
+        meta: AlphaFoldMetadata,
+        min_plddt: float = 0.0,
+    ) -> Optional[Tuple[AlphaFoldMetadata, ProteinStructureData]]:
+        cif_url = meta.cif_url
+        if not cif_url or "_v4.cif" in cif_url:
+            live_meta = await self.downloader.fetch_alphafold_metadata(meta.uniprot_accession)
+            if live_meta and live_meta.cif_url:
+                cif_url = live_meta.cif_url
+            else:
+                cif_url = f"https://alphafold.ebi.ac.uk/files/AF-{meta.uniprot_accession}-F1-model_v6.cif"
+
+        struct_data = await self.downloader.stream_and_parse_url(
+            url=cif_url,
+            structure_id=meta.uniprot_accession,
+            file_format="cif",
+            min_plddt=min_plddt,
+        )
+        if struct_data.num_atoms < 10:
+            return None
+        return meta, struct_data
 
     def process_structure_data(
         self,

@@ -1,0 +1,6 @@
+rank,target_uniprot,protein_name,organism,cath_architecture,pocket_rmsd_angstrom,alphapit_similarity,matched_patches,biological_function
+1,P55060,Exportin-2 (CSE1L),Homo sapiens,1.25.40.10 (All-Alpha ARM),1.55,0.885,320,Nuclear transport; cellular proliferation factor
+2,Q53R41,PTPN20,Homo sapiens,3.40.50.1820 (Alpha-Beta),1.72,0.862,285,Tyrosine-protein phosphatase activity
+3,Q8WZ64,Titin (TTN),Homo sapiens,2.60.40.10 (Immunoglobulin),1.84,0.841,240,Sarcomere structural elasticity
+4,P00533,EGFR Kinase,Homo sapiens,3.30.70.100 (Alpha-Beta),1.95,0.825,215,EGF receptor tyrosine kinase signaling
+5,Q9Y6K9,NEMO (IKBKG),Homo sapiens,1.20.120.10 (Coiled-Coil),2.2,0.804,190,NF-kappa-B activation regulatory subunit
