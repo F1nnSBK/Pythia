@@ -4,10 +4,10 @@
 [![Python: 3.12](https://img.shields.io/badge/Python-3.12-brightgreen.svg)](https://www.python.org/)
 [![Hardware: Consumer Ready](https://img.shields.io/badge/RAM-0.28%20GB-orange.svg)](https://github.com/F1nnSBK/Pythia)
 
-Official companion code and reproducibility repository for the paper:
+Official companion code and reproducibility repository for the manuscript:
 > **"Proteome-Wide 3D Pocket Search via LBO-dMaSIF Surface Embeddings and Zero-Copy Bit-Sliced Cascades"**  
 > *Finn Hertsch (DHBW Ravensburg)*  
-> IEEE/ACM Transactions on Computational Biology and Bioinformatics (TCBB) / Oxford Bioinformatics
+> Preprint / Submitted to IEEE/ACM Transactions on Computational Biology and Bioinformatics (TCBB)
 
 ---
 
@@ -27,7 +27,7 @@ Official companion code and reproducibility repository for the paper:
 ## Repository Structure
 
 ```
-AlphaPit/
+Pythia/
 ├── data/
 │   └── structures/              # Validated PDB files (6LU7, 1M17, AF-P55060)
 ├── docs/                        # Publication figures (Tufte SVGs) & PyMOL sessions (.pse)
@@ -46,7 +46,7 @@ AlphaPit/
 │   ├── 10_render_publication_figures.py         # Master Tufte & 3D Ribbon renderer
 │   └── reproduce_all.py                         # Master 1-Click Reproducibility Runner
 ├── src/
-│   └── alphapit/                # Modular library (Geometry, Models, Storage, Analysis)
+│   └── alphapit/                # Core modular library (Geometry, Models, Storage, Analysis)
 ├── tests/                       # Automated pytest test suite
 └── pyproject.toml               # Package dependencies and configuration
 ```
@@ -64,8 +64,8 @@ AlphaPit/
 Using [`uv`](https://github.com/astral-sh/uv) (recommended) or standard `venv`:
 
 ```bash
-git clone https://github.com/pithos-bio/pithos-lbo.git
-cd pithos-lbo
+git clone https://github.com/F1nnSBK/Pythia.git
+cd Pythia
 
 # Create virtual environment
 uv venv .venv --python 3.12
@@ -128,15 +128,15 @@ pytest tests/ -v
 
 ## Citation
 
-If you use AlphaPit, the LBO-dMaSIF encoder, or PithosDB in your research, please cite:
+If you use Pythia, the LBO-dMaSIF encoder, or PithosDB in your research, please cite:
 
 ```bibtex
-@article{hertsch2026alphapit,
+@article{hertsch2026pythia,
   author    = {Finn Hertsch},
   title     = {Proteome-Wide 3D Pocket Search via LBO-dMaSIF Surface Embeddings and Zero-Copy Bit-Sliced Cascades},
   journal   = {IEEE/ACM Transactions on Computational Biology and Bioinformatics},
   year      = {2026},
-  url       = {https://github.com/pithos-bio/pithos-lbo}
+  url       = {https://github.com/F1nnSBK/Pythia}
 }
 ```
 
