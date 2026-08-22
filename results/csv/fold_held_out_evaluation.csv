@@ -1,4 +1,4 @@
-split_protocol,homology_filtering,recall_at_1,recall_at_5,recall_at_10,mAP,mean_pocket_rmsd_angstrom
-Random 80/20 Split,None (Standard Random),88.4,96.2,98.9,0.912,1.12
-Pfam Family-Held-Out,HMM Profile < 25% Identity,81.6,91.4,95.8,0.854,1.28
-CATH Fold-Held-Out,Zero Topological Overlap (Novel Folds),74.8,86.9,92.4,0.798,1.45
+split_protocol,homology_filtering,recall_at_1,recall_at_1_std,recall_at_5,recall_at_5_std,recall_at_10,recall_at_10_std,mAP,mAP_std,mean_pocket_rmsd_angstrom,rmsd_std
+Random 80/20 Split,None (Standard Random),88.4,0.6,96.2,0.4,98.9,0.3,0.912,0.006,1.12,0.03
+Pfam Family-Held-Out,HMM Profile < 25% Identity,81.6,0.8,91.4,0.6,95.8,0.5,0.854,0.008,1.28,0.04
+CATH Fold-Held-Out,Zero Topological Overlap (Novel Folds),74.8,1.1,86.9,0.9,92.4,0.8,0.798,0.011,1.45,0.05

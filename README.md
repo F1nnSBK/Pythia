@@ -12,7 +12,7 @@
 Pythia/
 ├── data/
 │   └── structures/              # Validated PDB files (6LU7, 1M17, AF-P55060)
-├── docs/                        # Publication figures (Tufte SVGs) & PyMOL sessions (.pse)
+├── docs/                        # Publication figures (Tufte SVGs), PyMOL sessions (.pse) & BENCHMARK_METHODOLOGY.md
 ├── results/
 │   └── csv/                     # Curated reproducible CSV benchmark datasets
 ├── scripts/                     # Numbered, modular reproduction pipeline
@@ -26,11 +26,13 @@ Pythia/
 │   ├── 08_hardware_scaling_throughput.py        # Fig 8 (Multi-threading audit)
 │   ├── 09_index_storage_audit.py                # 15.88 GB layout audit
 │   ├── 10_render_publication_figures.py         # Master Tufte & 3D Ribbon renderer
+│   ├── mine_global_pocket_atlas.py              # Proteome-wide 103-shard atlas miner
 │   └── reproduce_all.py                         # Master 1-Click Reproducibility Runner
 ├── src/
 │   └── alphapit/                # Core modular library (Geometry, Models, Storage, Analysis)
 ├── tests/                       # Automated pytest test suite
-└── pyproject.toml               # Package dependencies and configuration
+├── pyproject.toml               # Package dependencies and configuration
+└── README.md                    # Project documentation
 ```
 
 ---

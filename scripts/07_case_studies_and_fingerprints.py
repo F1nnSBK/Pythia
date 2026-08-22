@@ -1,9 +1,15 @@
 """
 [Paper Table VI, Table VII & Figure 7] Case Studies & Quantitative Fingerprints.
 Generates:
-1. Table VI: SARS-CoV-2 Mpro (6LU7) Human Off-Target Candidates (CSE1L P55060, Titin, etc.)
-2. Table VII: Dark Proteome Deorphanization (Q9Y6K9, Q05D32, Q9Y6R7)
+1. Table VI: SARS-CoV-2 Mpro (6LU7) Cross-Reactivity Hypotheses in Human Proteome (CSE1L P55060, Titin, etc.)
+2. Table VII: Dark Proteome Deorphanization Hypotheses (Q9Y6K9, Q05D32, Q9Y6R7)
 3. Figure 7: 11-Feature Surface Fingerprint Alignment (EGFR 1M17 vs CSE1L P55060)
+
+METHODOLOGICAL & BIOPHYSICAL NOTES:
+- Matches identified in human host proteome represent in silico prioritized hypotheses for structural
+  pocket mimicry and potential polypharmacology / off-target interactions.
+- All structural alignments (e.g. 6LU7 vs CSE1L) reflect geometric surface shape + electrostatic similarity
+  and serve as computational candidates requiring downstream experimental enzymatic validation.
 """
 
 from __future__ import annotations
@@ -16,17 +22,96 @@ DATA_DIR = REPO_ROOT / "results" / "csv"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 OFF_TARGET_DATA = [
-    {"rank": 1, "target_uniprot": "P55060", "protein_name": "Exportin-2 (CSE1L)", "organism": "Homo sapiens", "cath_architecture": "1.25.40.10 (All-Alpha ARM)", "pocket_rmsd_angstrom": 1.55, "alphapit_similarity": 0.885, "matched_patches": 320, "biological_function": "Nuclear transport; cellular proliferation factor"},
-    {"rank": 2, "target_uniprot": "Q53R41", "protein_name": "PTPN20", "organism": "Homo sapiens", "cath_architecture": "3.40.50.1820 (Alpha-Beta)", "pocket_rmsd_angstrom": 1.72, "alphapit_similarity": 0.862, "matched_patches": 285, "biological_function": "Tyrosine-protein phosphatase activity"},
-    {"rank": 3, "target_uniprot": "Q8WZ64", "protein_name": "Titin (TTN)", "organism": "Homo sapiens", "cath_architecture": "2.60.40.10 (Immunoglobulin)", "pocket_rmsd_angstrom": 1.84, "alphapit_similarity": 0.841, "matched_patches": 240, "biological_function": "Sarcomere structural elasticity"},
-    {"rank": 4, "target_uniprot": "P00533", "protein_name": "EGFR Kinase", "organism": "Homo sapiens", "cath_architecture": "3.30.70.100 (Alpha-Beta)", "pocket_rmsd_angstrom": 1.95, "alphapit_similarity": 0.825, "matched_patches": 215, "biological_function": "EGF receptor tyrosine kinase signaling"},
-    {"rank": 5, "target_uniprot": "Q9Y6K9", "protein_name": "NEMO (IKBKG)", "organism": "Homo sapiens", "cath_architecture": "1.20.120.10 (Coiled-Coil)", "pocket_rmsd_angstrom": 2.20, "alphapit_similarity": 0.804, "matched_patches": 190, "biological_function": "NF-kappa-B activation regulatory subunit"},
+    {
+        "rank": 1,
+        "target_uniprot": "P55060",
+        "protein_name": "Exportin-2 (CSE1L)",
+        "organism": "Homo sapiens",
+        "cath_architecture": "1.25.40.10 (All-Alpha ARM)",
+        "pocket_rmsd_angstrom": 1.55,
+        "alphapit_similarity": 0.885,
+        "matched_patches": 320,
+        "biological_function": "Nuclear transport; cellular proliferation factor",
+        "hypothesis_class": "Pocket Mimicry Candidate (In Silico Hypothesis)",
+    },
+    {
+        "rank": 2,
+        "target_uniprot": "Q53R41",
+        "protein_name": "PTPN20",
+        "organism": "Homo sapiens",
+        "cath_architecture": "3.40.50.1820 (Alpha-Beta)",
+        "pocket_rmsd_angstrom": 1.72,
+        "alphapit_similarity": 0.862,
+        "matched_patches": 285,
+        "biological_function": "Tyrosine-protein phosphatase activity",
+        "hypothesis_class": "Pocket Mimicry Candidate (In Silico Hypothesis)",
+    },
+    {
+        "rank": 3,
+        "target_uniprot": "Q8WZ64",
+        "protein_name": "Titin (TTN)",
+        "organism": "Homo sapiens",
+        "cath_architecture": "2.60.40.10 (Immunoglobulin)",
+        "pocket_rmsd_angstrom": 1.84,
+        "alphapit_similarity": 0.841,
+        "matched_patches": 240,
+        "biological_function": "Sarcomere structural elasticity",
+        "hypothesis_class": "Low-Affinity Structural Match (In Silico)",
+    },
+    {
+        "rank": 4,
+        "target_uniprot": "P00533",
+        "protein_name": "EGFR Kinase",
+        "organism": "Homo sapiens",
+        "cath_architecture": "3.30.70.100 (Alpha-Beta)",
+        "pocket_rmsd_angstrom": 1.95,
+        "alphapit_similarity": 0.825,
+        "matched_patches": 215,
+        "biological_function": "EGF receptor tyrosine kinase signaling",
+        "hypothesis_class": "Kinase Cleft Partial Overlap (In Silico)",
+    },
+    {
+        "rank": 5,
+        "target_uniprot": "Q9Y6K9",
+        "protein_name": "NEMO (IKBKG)",
+        "organism": "Homo sapiens",
+        "cath_architecture": "1.20.120.10 (Coiled-Coil)",
+        "pocket_rmsd_angstrom": 2.20,
+        "alphapit_similarity": 0.804,
+        "matched_patches": 190,
+        "biological_function": "NF-kappa-B activation regulatory subunit",
+        "hypothesis_class": "Shallow Surface Cleft (In Silico)",
+    },
 ]
 
 DARK_PROTEOME_DATA = [
-    {"uncharacterized_protein": "Q9Y6K9", "discovered_structural_analog": "P00533 (EGFR Kinase)", "inferred_pocket_function": "ATP P-Loop Kinase Cavity", "pocket_rmsd_angstrom": 1.34, "alphapit_similarity": 0.942, "biological_rationale": "High steric overlap with canonical ATP adenine-binding hinge"},
-    {"uncharacterized_protein": "Q05D32", "discovered_structural_analog": "P38272 (Alcohol Dehyd.)", "inferred_pocket_function": "Rossmann NAD(P) Binding Pocket", "pocket_rmsd_angstrom": 1.41, "alphapit_similarity": 0.917, "biological_rationale": "Conserved dinucleotide binding fold with invariant Gly-rich loop"},
-    {"uncharacterized_protein": "Q9Y6R7", "discovered_structural_analog": "P20134 (Gastricsin)", "inferred_pocket_function": "Aspartyl Protease Catalytic Dyad", "pocket_rmsd_angstrom": 1.48, "alphapit_similarity": 0.895, "biological_rationale": "Twin Asp active site geometry embedded in non-homologous fold"},
+    {
+        "uncharacterized_protein": "Q9Y6K9",
+        "discovered_structural_analog": "P00533 (EGFR Kinase)",
+        "inferred_pocket_function": "ATP P-Loop Kinase Cavity",
+        "pocket_rmsd_angstrom": 1.34,
+        "alphapit_similarity": 0.942,
+        "hypothesis_category": "Putative Ser/Thr Kinase (In Silico Hypothesis)",
+        "biological_rationale": "High steric overlap with canonical ATP adenine-binding hinge (Computational Annotation)",
+    },
+    {
+        "uncharacterized_protein": "Q05D32",
+        "discovered_structural_analog": "P38272 (Alcohol Dehyd.)",
+        "inferred_pocket_function": "Rossmann NAD(P) Binding Pocket",
+        "pocket_rmsd_angstrom": 1.41,
+        "alphapit_similarity": 0.917,
+        "hypothesis_category": "Putative Dehydrogenase (In Silico Hypothesis)",
+        "biological_rationale": "Conserved dinucleotide binding fold with invariant Gly-rich loop (Computational Annotation)",
+    },
+    {
+        "uncharacterized_protein": "Q9Y6R7",
+        "discovered_structural_analog": "P20134 (Gastricsin)",
+        "inferred_pocket_function": "Aspartyl Protease Catalytic Dyad",
+        "pocket_rmsd_angstrom": 1.48,
+        "alphapit_similarity": 0.895,
+        "hypothesis_category": "Putative Hydrolase (In Silico Hypothesis)",
+        "biological_rationale": "Twin Asp active site geometry embedded in non-homologous fold (Computational Annotation)",
+    },
 ]
 
 FINGERPRINT_1M17 = [
