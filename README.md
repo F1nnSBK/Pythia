@@ -29,7 +29,7 @@ Pythia/
 │   ├── mine_global_pocket_atlas.py              # Proteome-wide 103-shard atlas miner
 │   └── reproduce_all.py                         # Master 1-Click Reproducibility Runner
 ├── src/
-│   └── alphapit/                # Core modular library (Geometry, Models, Storage, Analysis)
+│   └── pythia/                # Core modular library (Geometry, Models, Storage, Analysis)
 ├── tests/                       # Automated pytest test suite
 ├── pyproject.toml               # Package dependencies and configuration
 └── README.md                    # Project documentation

@@ -1,5 +1,5 @@
 """
-Master 1-Click Reproducibility Engine for AlphaPit Manuscript.
+Master 1-Click Reproducibility Engine for Pythia Manuscript.
 Sequentially executes all empirical benchmarks, evaluations, and figure generators.
 Adheres strictly to zero-swapping memory management and deterministic seed controls.
 """
@@ -12,7 +12,7 @@ import sys
 import time
 from pathlib import Path
 
-REPO_ROOT = Path("/Users/finnhertsch/projects/AlphaPit")
+REPO_ROOT = Path("/Users/finnhertsch/projects/Pythia")
 PYTHON_BIN = REPO_ROOT / ".venv" / "bin" / "python"
 
 STEPS = [
@@ -61,7 +61,7 @@ EXPECTED_DOCS = [
 
 def reproduce_entire_manuscript():
     print("=================================================================")
-    print("ALPHAPIT: MASTER 1-CLICK MANUSCRIPT REPRODUCIBILITY PIPELINE")
+    print("PYTHIA: MASTER 1-CLICK MANUSCRIPT REPRODUCIBILITY PIPELINE")
     print("=================================================================\n")
 
     t_start = time.perf_counter()

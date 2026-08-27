@@ -6,16 +6,16 @@ import gzip
 import pytest
 import numpy as np
 
-from alphapit.download.stream import (
+from pythia.download.stream import (
     StreamingGzipDecompressor,
     iter_lines_from_byte_stream,
     iter_lines_from_bytes,
 )
-from alphapit.download.parser import (
+from pythia.download.parser import (
     StreamingPDBParser,
     ProteinStructureData,
 )
-from alphapit.download.client import PDBStreamDownloader
+from pythia.download.client import PDBStreamDownloader
 
 
 SAMPLE_PDB_CONTENT = """HEADER    PROTEIN                                 18-AUG-26   1XYZ              
@@ -61,7 +61,7 @@ ATOM 5 C CB ALA A 1 12.800 14.600 9.150 1.0 20.00 1 ALA A CB
 
 
 def test_streaming_gzip_decompressor():
-    data = b"Hello, molecular streaming world with AlphaPit!"
+    data = b"Hello, molecular streaming world with Pythia!"
     compressed = gzip.compress(data)
 
     decompressor = StreamingGzipDecompressor(buffer_size=8)

@@ -16,13 +16,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from alphapit.config import settings
-from alphapit.geometry.features import SurfaceFeatureExtractor
-from alphapit.geometry.pointcloud import ProteinPointCloud
-from alphapit.geometry.surface import MolecularSurface
-from alphapit.models.dmasif_net import dMaSIFNet, dMaSIFOutput
-from alphapit.pipeline import AlphaPitPipeline
-from alphapit.storage.adapter import PithosStorageAdapter, SurfaceQueryResult
+from pythia.config import settings
+from pythia.geometry.features import SurfaceFeatureExtractor
+from pythia.geometry.pointcloud import ProteinPointCloud
+from pythia.geometry.surface import MolecularSurface
+from pythia.models.dmasif_net import dMaSIFNet, dMaSIFOutput
+from pythia.pipeline import PythiaPipeline
+from pythia.storage.adapter import PithosStorageAdapter, SurfaceQueryResult
 
 
 @dataclass
@@ -45,8 +45,8 @@ class ConvergentPocketMiner:
     identifying functional pocket mimicry even across completely divergent evolutionary folds.
     """
 
-    def __init__(self, pipeline: Optional[AlphaPitPipeline] = None) -> None:
-        self.pipeline = pipeline or AlphaPitPipeline()
+    def __init__(self, pipeline: Optional[PythiaPipeline] = None) -> None:
+        self.pipeline = pipeline or PythiaPipeline()
 
     def identify_pocket_patches(
         self,

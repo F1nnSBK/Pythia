@@ -37,8 +37,8 @@ except ImportError:
     pass
 
 import pithosdb
-from alphapit.config import settings
-from alphapit.storage.adapter import PithosStorageAdapter, SurfaceQueryResult
+from pythia.config import settings
+from pythia.storage.adapter import PithosStorageAdapter, SurfaceQueryResult
 
 
 def extract_representative_pockets(
@@ -132,13 +132,13 @@ def extract_representative_pockets(
 
 def run_global_pocket_atlas():
     print("=================================================================")
-    print("ALPHAPIT GLOBAL POCKET ATLAS & STATISTICAL CLUSTERING ENGINE")
+    print("PYTHIA GLOBAL POCKET ATLAS & STATISTICAL CLUSTERING ENGINE")
     print("Mining 25,379 Proteomes (Homo sapiens + S. cerevisiae) across 103 Shards")
     print("=================================================================\n")
 
-    indices_dir = Path("/Volumes/AlphaPitData/pithos_indices")
-    results_dir = Path("/Users/finnhertsch/projects/AlphaPit/results/csv")
-    docs_dir = Path("/Users/finnhertsch/projects/AlphaPit/docs")
+    indices_dir = Path("/Volumes/PythiaData/pithos_indices")
+    results_dir = Path("/Users/finnhertsch/projects/Pythia/results/csv")
+    docs_dir = Path("/Users/finnhertsch/projects/Pythia/docs")
     brain_dir = Path("/Users/finnhertsch/.gemini/antigravity-ide/brain/b0726c1d-0a91-49c5-b966-e8ca31f90b29")
     
     results_dir.mkdir(parents=True, exist_ok=True)

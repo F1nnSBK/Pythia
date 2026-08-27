@@ -8,16 +8,16 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from alphapit.storage.adapter import (
+from pythia.storage.adapter import (
     PithosStorageAdapter,
     SurfaceVectorRecord,
 )
-from alphapit.storage.matryoshka import MatryoshkaProjector
+from pythia.storage.matryoshka import MatryoshkaProjector
 
 
 @pytest.fixture
 def temp_storage_dir():
-    temp_dir = tempfile.mkdtemp(prefix="alphapit_test_pithos_")
+    temp_dir = tempfile.mkdtemp(prefix="pythia_test_pithos_")
     yield Path(temp_dir)
     shutil.rmtree(temp_dir, ignore_errors=True)
 

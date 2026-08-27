@@ -7,11 +7,11 @@ Diese Anleitung dokumentiert die automatisierte und interaktive Erstellung der p
 ## 1. Voraussetzungen & Pfade
 
 * **PyMOL macOS Binary:** `/Applications/PyMOL.app/Contents/MacOS/PyMOL`
-* **Python Environment:** `.venv/bin/python` (in `AlphaPit` oder `writing`)
+* **Python Environment:** `.venv/bin/python` (in `Pythia` oder `writing`)
 * **PDB-Strukturen:**
-  * SARS-CoV-2 $M^{\text{pro}}$: `/Users/finnhertsch/projects/AlphaPit/data/structures/6lu7.pdb`
-  * Human CSE1L (Host Match): `/Users/finnhertsch/projects/AlphaPit/data/structures/AF-P55060-F1-model_v4.pdb`
-  * EGFR Kinase (ATP-Tasche): `/Users/finnhertsch/projects/AlphaPit/data/structures/1m17.pdb`
+  * SARS-CoV-2 $M^{\text{pro}}$: `/Users/finnhertsch/projects/Pythia/data/structures/6lu7.pdb`
+  * Human CSE1L (Host Match): `/Users/finnhertsch/projects/Pythia/data/structures/AF-P55060-F1-model_v4.pdb`
+  * EGFR Kinase (ATP-Tasche): `/Users/finnhertsch/projects/Pythia/data/structures/1m17.pdb`
 
 ---
 
@@ -20,7 +20,7 @@ Diese Anleitung dokumentiert die automatisierte und interaktive Erstellung der p
 Um alle 3D-Abbildungen (Figure 5 & Figure 7) headless mit transparentem Alphakanal zu rendern und als Vektor-SVG sowie 300-DPI-PDF für LaTeX zu exportieren:
 
 ```bash
-cd /Users/finnhertsch/projects/AlphaPit
+cd /Users/finnhertsch/projects/Pythia
 .venv/bin/python scripts/render_publication_3d_figures.py
 ```
 
@@ -32,7 +32,7 @@ cd /Users/finnhertsch/projects/AlphaPit
 2. **Matplotlib / Tufte-Integration:**
    * Bindet die transparenten 3D-Strukturen in ein 2-Panel-Vektor-Canvas ein.
    * Verwendet die Serifenschriftart **Palatino / STIX** aus `writing/shared/tufte_plots/style.py`.
-   * Exportiert direkt nach `docs/` und `writing/alphapit_bio/figures/`.
+   * Exportiert direkt nach `docs/` und `writing/pythia_bio/figures/`.
 
 ---
 
@@ -42,12 +42,12 @@ Falls ein Agent oder Autor den Blickwinkel, Farben oder Zoom manuell verändern 
 
 1. **PyMOL mit fertiger Session öffnen:**
    ```bash
-   open -a PyMOL /Users/finnhertsch/projects/AlphaPit/docs/6lu7_p55060_alignment.pse
+   open -a PyMOL /Users/finnhertsch/projects/Pythia/docs/6lu7_p55060_alignment.pse
    ```
 2. **Oder das Automatisierungs-Skript in der PyMOL-Konsole ausführen:**
    In die `PyMOL >`-Befehlszeile eingeben:
    ```pml
-   @/Users/finnhertsch/projects/AlphaPit/docs/align_6lu7_p55060.pml
+   @/Users/finnhertsch/projects/Pythia/docs/align_6lu7_p55060.pml
    ```
 
 ---
@@ -63,8 +63,8 @@ set cartoon_transparency, 0.20
 set ray_shadows, 0
 
 # Strukturen laden
-load /Users/finnhertsch/projects/AlphaPit/data/structures/6lu7.pdb, viral_mpro_6lu7
-load /Users/finnhertsch/projects/AlphaPit/data/structures/AF-P55060-F1-model_v4.pdb, human_target_p55060
+load /Users/finnhertsch/projects/Pythia/data/structures/6lu7.pdb, viral_mpro_6lu7
+load /Users/finnhertsch/projects/Pythia/data/structures/AF-P55060-F1-model_v4.pdb, human_target_p55060
 
 # Farbpalette (Tufte Rust & Marine)
 color warmpink, viral_mpro_6lu7
@@ -83,7 +83,7 @@ color marine, cse1l_pocket
 set stick_radius, 0.24
 
 # Session speichern
-save /Users/finnhertsch/projects/AlphaPit/docs/6lu7_p55060_alignment.pse
+save /Users/finnhertsch/projects/Pythia/docs/6lu7_p55060_alignment.pse
 ```
 
 ---

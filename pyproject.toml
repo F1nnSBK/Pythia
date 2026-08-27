@@ -39,8 +39,7 @@ dev = [
 ]
 
 [project.scripts]
-pythia = "alphapit.cli:main"
-alphapit = "alphapit.cli:main"
+pythia = "pythia.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,5 +1,5 @@
 """
-Configuration module for the AlphaPit library.
+Configuration module for the Pythia library.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ def get_default_storage_path() -> Path:
     Returns the preferred NVMe SSD mount path if available,
     otherwise falls back to a local storage directory.
     """
-    ssd_path = Path("/Volumes/AlphaPitData")
+    ssd_path = Path("/Volumes/PythiaData")
     if ssd_path.exists() and os.access(ssd_path, os.W_OK):
         return ssd_path
     fallback = Path("./data")
@@ -24,14 +24,14 @@ def get_default_storage_path() -> Path:
     return fallback
 
 
-class AlphaPitSettings(BaseSettings):
+class PythiaSettings(BaseSettings):
     """
     Central settings for streaming download, geometry processing,
     and PithosDB vector index storage.
     """
 
     model_config = SettingsConfigDict(
-        env_prefix="ALPHAPIT_",
+        env_prefix="PYTHIA_",
         arbitrary_types_allowed=True,
     )
 
@@ -116,5 +116,5 @@ class AlphaPitSettings(BaseSettings):
         os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"
 
 
-settings = AlphaPitSettings()
+settings = PythiaSettings()
 settings.configure_environment()

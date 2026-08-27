@@ -9,11 +9,11 @@ from __future__ import annotations
 from typing import Optional
 import torch
 
-from alphapit.config import settings
-from alphapit.geometry.curvature import MultiScaleCurvatureEstimator
-from alphapit.geometry.laplacian import LaplaceBeltramiEstimator
-from alphapit.geometry.pointcloud import ProteinPointCloud
-from alphapit.geometry.surface import MolecularSurface, MolecularSurfaceGenerator
+from pythia.config import settings
+from pythia.geometry.curvature import MultiScaleCurvatureEstimator
+from pythia.geometry.laplacian import LaplaceBeltramiEstimator
+from pythia.geometry.pointcloud import ProteinPointCloud
+from pythia.geometry.surface import MolecularSurface, MolecularSurfaceGenerator
 
 
 class SurfaceFeatureExtractor:

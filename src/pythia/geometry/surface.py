@@ -10,7 +10,7 @@ from typing import Optional, Tuple
 import torch
 import torch.nn.functional as F
 
-from alphapit.geometry.pointcloud import ProteinPointCloud
+from pythia.geometry.pointcloud import ProteinPointCloud
 
 
 @dataclass

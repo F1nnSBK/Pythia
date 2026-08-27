@@ -1,13 +1,13 @@
 """
-PithosDB storage and vector indexing subsystem for AlphaPit.
+PithosDB storage and vector indexing subsystem for Pythia.
 """
 
-from alphapit.storage.adapter import (
+from pythia.storage.adapter import (
     PithosStorageAdapter,
     SurfaceQueryResult,
     SurfaceVectorRecord,
 )
-from alphapit.storage.matryoshka import MatryoshkaProjector
+from pythia.storage.matryoshka import MatryoshkaProjector
 
 __all__ = [
     "PithosStorageAdapter",

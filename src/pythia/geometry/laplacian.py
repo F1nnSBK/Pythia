@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple
 import torch
 import torch.nn.functional as F
 
-from alphapit.geometry.surface import MolecularSurface
+from pythia.geometry.surface import MolecularSurface
 
 
 class LaplaceBeltramiEstimator:

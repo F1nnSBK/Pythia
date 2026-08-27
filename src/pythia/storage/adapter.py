@@ -12,8 +12,8 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 import numpy as np
 import pithosdb
 
-from alphapit.config import settings
-from alphapit.storage.matryoshka import MatryoshkaProjector
+from pythia.config import settings
+from pythia.storage.matryoshka import MatryoshkaProjector
 
 
 @dataclass
@@ -41,7 +41,7 @@ class SurfaceQueryResult:
 
 class PithosStorageAdapter:
     """
-    Adapter bridging AlphaPit geometric embeddings with the Pithos Single-File (.pithos) Container Engine.
+    Adapter bridging Pythia geometric embeddings with the Pithos Single-File (.pithos) Container Engine.
     """
 
     def __init__(

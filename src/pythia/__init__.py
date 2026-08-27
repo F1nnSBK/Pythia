@@ -1,5 +1,5 @@
 """
-AlphaPit: Structural Surface Fingerprinting and Vector Indexing for AlphaFold & PDB structures.
+Pythia: Structural Surface Fingerprinting and Vector Indexing for AlphaFold & PDB structures.
 """
 
 import os
@@ -17,7 +17,7 @@ try:
 except Exception:
     pass
 
-from alphapit.config import settings
-from alphapit.pipeline import AlphaPitPipeline
+from pythia.config import settings
+from pythia.pipeline import PythiaPipeline
 
-__all__ = ["AlphaPitPipeline", "settings"]
+__all__ = ["PythiaPipeline", "settings"]

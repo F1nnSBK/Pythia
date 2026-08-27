@@ -1,5 +1,5 @@
 """
-Command-line interface for the AlphaPit library.
+Command-line interface for the Pythia library.
 """
 
 from __future__ import annotations
@@ -16,17 +16,17 @@ from typing import Dict, List, Optional
 import numpy as np
 import torch
 
-from alphapit.analysis.convergent import ConvergentPocketMiner, render_convergent_tufte_svg
-from alphapit.config import settings
-from alphapit.download.client import PDBStreamDownloader
-from alphapit.pipeline import AlphaPitPipeline
-from alphapit.storage.adapter import SurfaceQueryResult
+from pythia.analysis.convergent import ConvergentPocketMiner, render_convergent_tufte_svg
+from pythia.config import settings
+from pythia.download.client import PDBStreamDownloader
+from pythia.pipeline import PythiaPipeline
+from pythia.storage.adapter import SurfaceQueryResult
 
 
 def cmd_status(args: argparse.Namespace) -> None:
     """Print hardware, NVMe storage, and system status."""
-    print("=== AlphaPit System Status ===")
-    ssd_path = Path("/Volumes/AlphaPitData")
+    print("=== Pythia System Status ===")
+    ssd_path = Path("/Volumes/PythiaData")
     if ssd_path.exists():
         total, used, free = shutil.disk_usage(ssd_path)
         print(f"NVMe SSD Mount:     {ssd_path} (ONLINE)")
@@ -57,7 +57,7 @@ def cmd_status(args: argparse.Namespace) -> None:
 
 
 async def _run_search(args: argparse.Namespace) -> None:
-    pipeline = AlphaPitPipeline()
+    pipeline = PythiaPipeline()
     print(f"Streaming query structure {args.query_id}...")
     surface, output = await pipeline.stream_and_process_structure(
         args.query_id, is_alphafold=args.alphafold, file_format=args.format
@@ -81,10 +81,10 @@ def cmd_search(args: argparse.Namespace) -> None:
 
 
 async def _run_search_proteome(args: argparse.Namespace) -> None:
-    pipeline = AlphaPitPipeline()
+    pipeline = PythiaPipeline()
     t0 = time.perf_counter()
 
-    print("=== AlphaPit Multi-Shard Proteome Pocket Search ===")
+    print("=== Pythia Multi-Shard Proteome Pocket Search ===")
     print(f"Query Target:       {args.query_id} (format={args.format})")
     print(f"Target Storage:     {settings.full_index_path}")
 
@@ -151,7 +151,7 @@ async def _run_mine_pockets(args: argparse.Namespace) -> None:
     if args.residues:
         parsed_res = [int(r.strip()) for r in args.residues.split(",") if r.strip().isdigit()]
 
-    print("=== AlphaPit Convergent Evolution & Pocket Mining Engine ===")
+    print("=== Pythia Convergent Evolution & Pocket Mining Engine ===")
     print(f"Query Structure:    {args.query_id}")
     if parsed_res:
         print(f"Target Pocket Res:  {parsed_res}")
@@ -196,13 +196,13 @@ def cmd_mine_pockets(args: argparse.Namespace) -> None:
 
 
 async def _run_proteome(args: argparse.Namespace) -> None:
-    pipeline = AlphaPitPipeline(
+    pipeline = PythiaPipeline(
         concurrency=1,
         throttle_sleep_ms=args.throttle_ms,
     )
     actual_limit = None if (args.limit is None or args.limit <= 0) else args.limit
 
-    print("=== AlphaPit Proteome Streaming Pipeline ===")
+    print("=== Pythia Proteome Streaming Pipeline ===")
     print(f"Target Organism:    Tax ID {args.organism} (9606 = Homo sapiens)")
     print(f"Target Limit:       {actual_limit if actual_limit else 'ALL (~20,400 reviewed)'}")
     print(f"Hardware Profile:   Single-Worker Gentle (<400MB RAM ceiling, {args.throttle_ms}ms throttle)")
@@ -237,8 +237,8 @@ def cmd_proteome(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="alphapit",
-        description="AlphaPit: End-to-end geometric deep learning on protein surfaces with PithosDB vector index",
+        prog="pythia",
+        description="Pythia: End-to-end geometric deep learning on protein surfaces with PithosDB vector index",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

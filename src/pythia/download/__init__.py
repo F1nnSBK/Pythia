@@ -1,16 +1,16 @@
 """
-Download and streaming parser subsystem for AlphaPit.
+Download and streaming parser subsystem for Pythia.
 """
 
-from alphapit.download.client import PDBStreamDownloader
-from alphapit.download.parser import (
+from pythia.download.client import PDBStreamDownloader
+from pythia.download.parser import (
     ParsedAtomRecord,
     ProteinStructureData,
     StreamingPDBParser,
     VDW_RADII_PM,
     STANDARD_AMINO_ACIDS,
 )
-from alphapit.download.stream import (
+from pythia.download.stream import (
     StreamingGzipDecompressor,
     iter_lines_from_byte_stream,
     iter_lines_from_bytes,

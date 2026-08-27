@@ -15,7 +15,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-REPO_ROOT = Path("/Users/finnhertsch/projects/AlphaPit")
+REPO_ROOT = Path("/Users/finnhertsch/projects/Pythia")
 DATA_DIR = REPO_ROOT / "results" / "csv"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 

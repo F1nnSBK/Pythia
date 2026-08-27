@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import torch
 
-from alphapit.download.parser import ProteinStructureData, VDW_RADII_PM
+from pythia.download.parser import ProteinStructureData, VDW_RADII_PM
 
 
 @dataclass

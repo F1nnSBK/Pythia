@@ -1,5 +1,5 @@
 """
-End-to-end integration tests for AlphaPitPipeline.
+End-to-end integration tests for PythiaPipeline.
 """
 
 import shutil
@@ -7,13 +7,13 @@ import tempfile
 from pathlib import Path
 import pytest
 
-from alphapit.pipeline import AlphaPitPipeline
-from alphapit.storage.adapter import PithosStorageAdapter
+from pythia.pipeline import PythiaPipeline
+from pythia.storage.adapter import PithosStorageAdapter
 
 
 @pytest.fixture
 def temp_pipeline_storage():
-    temp_dir = tempfile.mkdtemp(prefix="alphapit_test_pipeline_")
+    temp_dir = tempfile.mkdtemp(prefix="pythia_test_pipeline_")
     yield Path(temp_dir)
     shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -21,7 +21,7 @@ def temp_pipeline_storage():
 @pytest.mark.asyncio
 async def test_end_to_end_pipeline(temp_pipeline_storage):
     adapter = PithosStorageAdapter(base_storage_dir=temp_pipeline_storage)
-    pipeline = AlphaPitPipeline(storage_adapter=adapter)
+    pipeline = PythiaPipeline(storage_adapter=adapter)
 
     # 1. Stream and process a live PDB structure
     pdb_id = "1a8o"

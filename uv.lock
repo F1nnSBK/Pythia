@@ -17,50 +17,6 @@ wheels = [
 ]
 
 [[package]]
-name = "alphapit"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aiofiles" },
-    { name = "biopython" },
-    { name = "httpx" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "pithosdb" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "torch" },
-    { name = "tqdm" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiofiles", specifier = ">=23.0.0" },
-    { name = "biopython", specifier = ">=1.80" },
-    { name = "httpx", specifier = ">=0.25.0" },
-    { name = "numpy", specifier = ">=1.26.0" },
-    { name = "pithosdb", specifier = ">=1.2.0" },
-    { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pydantic-settings", specifier = ">=2.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.0" },
-    { name = "scipy", specifier = ">=1.11.0" },
-    { name = "torch", specifier = ">=2.0.0" },
-    { name = "tqdm", specifier = ">=4.65.0" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "annotated-types"
 version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -843,20 +799,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pithosdb"
-version = "2.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/dc/5e/67516e22bca91fa5ae601ce838f511d05fdf63e23c6e9a1c45e127012f3b/pithosdb-2.0.0.tar.gz", hash = "sha256:7ad13678f275945678b09734eec9c24cbd62fe6dbabeaf5959edbabdef9a7200", size = 39939, upload-time = "2026-08-19T19:21:24.443Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/8b/55ef4a58b30f69e004ea92e2ca7fa3aab5fe132e50eb552fd138c41d44c8/pithosdb-2.0.0-py3-none-any.whl", hash = "sha256:a3101be1a1ce6762ee00f349f2d88540320442c653e2f03cbc1221eeebcff75e", size = 28550, upload-time = "2026-08-19T19:21:23.337Z" },
-]
-
-[[package]]
 name = "pluggy"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1050,6 +992,48 @@ sdist = { url = "https://files.pythonhosted.org/packages/43/7c/d36d04db312ecf429
 wheels = [
     { url = "https://files.pythonhosted.org/packages/03/e2/08a497ef684b88559c9cc5f4ad53a37e7b99e727094a86d6ea32536d5d3c/pytest_asyncio-1.4.0-py3-none-any.whl", hash = "sha256:933ca923a23075a87fb7070c0ec272a6848489824d887c85c812670932835aa1", size = 16930, upload-time = "2026-05-26T09:56:02.576Z" },
 ]
+
+[[package]]
+name = "pythia-bio"
+version = "1.0.0"
+source = { editable = "." }
+dependencies = [
+    { name = "aiofiles" },
+    { name = "biopython" },
+    { name = "httpx" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "torch" },
+    { name = "tqdm" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiofiles", specifier = ">=23.0.0" },
+    { name = "biopython", specifier = ">=1.80" },
+    { name = "httpx", specifier = ">=0.25.0" },
+    { name = "numpy", specifier = ">=1.26.0" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.0" },
+    { name = "scipy", specifier = ">=1.11.0" },
+    { name = "torch", specifier = ">=2.0.0" },
+    { name = "tqdm", specifier = ">=4.65.0" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "python-dotenv"

@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import AsyncIterator, Dict, List, Optional, Set
 import httpx
 
-from alphapit.config import settings
-from alphapit.download.parser import ProteinStructureData, StreamingPDBParser
-from alphapit.download.stream import iter_lines_from_byte_stream
+from pythia.config import settings
+from pythia.download.parser import ProteinStructureData, StreamingPDBParser
+from pythia.download.stream import iter_lines_from_byte_stream
 
 
 @dataclass

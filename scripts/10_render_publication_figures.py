@@ -1,5 +1,5 @@
 """
-[Paper Figures 1–8] Master Publication-Grade Figure Generator for AlphaPit.
+[Paper Figures 1–8] Master Publication-Grade Figure Generator for Pythia.
 Renders all authentic Palatino/STIX Tufte SVGs and 3D PyMOL Ribbons:
 - Figure 1: Hardware Efficiency (Resident RAM vs. Latency)
 - Figure 2: Ablation Study & Conformational Robustness
@@ -22,8 +22,8 @@ import matplotlib.image as mpimg
 import numpy as np
 import pandas as pd
 
-REPO_ROOT = Path("/Users/finnhertsch/projects/AlphaPit")
-WRITING_ROOT = Path("/Users/finnhertsch/projects/writing/alphapit_bio")
+REPO_ROOT = Path("/Users/finnhertsch/projects/Pythia")
+WRITING_ROOT = Path("/Users/finnhertsch/projects/writing/pythia_bio")
 DATA_DIR = REPO_ROOT / "results" / "csv"
 DOCS_DIR = REPO_ROOT / "docs"
 FIG_DIR = WRITING_ROOT / "figures"

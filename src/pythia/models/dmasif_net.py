@@ -11,9 +11,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from alphapit.geometry.features import SurfaceFeatureExtractor
-from alphapit.geometry.surface import MolecularSurface
-from alphapit.models.conv import QuasiGeodesicConv
+from pythia.geometry.features import SurfaceFeatureExtractor
+from pythia.geometry.surface import MolecularSurface
+from pythia.models.conv import QuasiGeodesicConv
 
 
 @dataclass

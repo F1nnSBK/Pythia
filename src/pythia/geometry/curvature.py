@@ -10,7 +10,7 @@ from typing import List, Tuple
 import torch
 import torch.nn.functional as F
 
-from alphapit.geometry.surface import MolecularSurface
+from pythia.geometry.surface import MolecularSurface
 
 
 class MultiScaleCurvatureEstimator:

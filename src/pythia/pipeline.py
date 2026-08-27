@@ -1,5 +1,5 @@
 """
-End-to-end AlphaPit pipeline orchestrating deterministic single-stream processing,
+End-to-end Pythia pipeline orchestrating deterministic single-stream processing,
 live async prefetching, geometry generation, dMaSIF neural inference, sharded storage,
 and strict memory management tailored for fanless Apple Silicon devices.
 """
@@ -18,14 +18,14 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from alphapit.config import settings
-from alphapit.download.client import AlphaFoldMetadata, PDBStreamDownloader
-from alphapit.download.parser import ProteinStructureData, StreamingPDBParser
-from alphapit.geometry.features import SurfaceFeatureExtractor
-from alphapit.geometry.pointcloud import ProteinPointCloud
-from alphapit.geometry.surface import MolecularSurface
-from alphapit.models.dmasif_net import dMaSIFNet, dMaSIFOutput
-from alphapit.storage.adapter import (
+from pythia.config import settings
+from pythia.download.client import AlphaFoldMetadata, PDBStreamDownloader
+from pythia.download.parser import ProteinStructureData, StreamingPDBParser
+from pythia.geometry.features import SurfaceFeatureExtractor
+from pythia.geometry.pointcloud import ProteinPointCloud
+from pythia.geometry.surface import MolecularSurface
+from pythia.models.dmasif_net import dMaSIFNet, dMaSIFOutput
+from pythia.storage.adapter import (
     PithosStorageAdapter,
     SurfaceQueryResult,
     SurfaceVectorRecord,
@@ -61,7 +61,7 @@ class PipelineMetrics:
         return (self.total_network_bytes / (1024 * 1024)) / self.elapsed_seconds
 
 
-class AlphaPitPipeline:
+class PythiaPipeline:
     """
     Unified high-level pipeline for streaming protein structures to Pithos vector database.
     Designed specifically for fanless Apple Silicon (M-series) with prefetching & strict memory bounds.

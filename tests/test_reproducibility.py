@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-REPO_ROOT = Path("/Users/finnhertsch/projects/AlphaPit")
+REPO_ROOT = Path("/Users/finnhertsch/projects/Pythia")
 DATA_DIR = REPO_ROOT / "results" / "csv"
 DOCS_DIR = REPO_ROOT / "docs"
 

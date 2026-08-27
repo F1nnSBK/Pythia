@@ -6,11 +6,11 @@ import pytest
 import torch
 import numpy as np
 
-from alphapit.download.parser import ProteinStructureData
-from alphapit.geometry.pointcloud import ProteinPointCloud
-from alphapit.geometry.surface import MolecularSurfaceGenerator
-from alphapit.geometry.curvature import MultiScaleCurvatureEstimator
-from alphapit.geometry.features import SurfaceFeatureExtractor
+from pythia.download.parser import ProteinStructureData
+from pythia.geometry.pointcloud import ProteinPointCloud
+from pythia.geometry.surface import MolecularSurfaceGenerator
+from pythia.geometry.curvature import MultiScaleCurvatureEstimator
+from pythia.geometry.features import SurfaceFeatureExtractor
 
 
 @pytest.fixture
@@ -99,7 +99,7 @@ def test_surface_feature_extractor(sample_structure_data):
 
 
 def test_laplacian_estimator(sample_structure_data):
-    from alphapit.geometry.laplacian import LaplaceBeltramiEstimator
+    from pythia.geometry.laplacian import LaplaceBeltramiEstimator
     pc = ProteinPointCloud.from_structure_data(sample_structure_data)
     gen = MolecularSurfaceGenerator(sup_sampling=12)
     surface = gen.generate_surface(pc)
