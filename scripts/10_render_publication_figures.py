@@ -90,9 +90,8 @@ def plot_figure_02():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6.8, 2.7))
 
     # Panel A: Ablation RMSD
-    models = ["Chem", "Curv", "HKS", "Chem+Curv", "Chem+HKS", "Curv+HKS", "21D-Base", "Pithos"]
-    col = "mean_pocket_rmsd_angstrom" if "mean_pocket_rmsd_angstrom" in df_abl.columns else "mean_rmsd_angstrom"
-    rmsd = df_abl[col].values
+    models = df_abl["Model"].values
+    rmsd = df_abl["RMSD_mean"].values
     y_pos = np.arange(len(models))
 
     colors_abl = [TUFTE_PALETTE["hnsw"] if "Pithos" in m else TUFTE_PALETTE["pithos_tier0"] for m in models]
@@ -107,22 +106,23 @@ def plot_figure_02():
     align_tufte_range_spines(ax1)
 
     # Panel B: Conformational Robustness
-    disp = df_rob["rmsd_angstrom"].values
-    ax2.plot(disp, df_rob["alphapit_full_similarity"].values, marker="o", markersize=3.5, 
+    df_rob = df_rob[df_rob["Is_Isometric"] == "No"].copy()
+    disp = df_rob["RMSD"].values
+    ax2.plot(disp, df_rob["Full_Pithos"].values, marker="o", markersize=3.5, 
              color=TUFTE_PALETTE["hnsw"], label="Pithos")
-    ax2.plot(disp, df_rob["lbo_hks_intrinsic_similarity"].values, marker="s", markersize=3.5, 
+    ax2.plot(disp, df_rob["HKS"].values, marker="s", markersize=3.5, 
              color=TUFTE_PALETTE["pithos"], linestyle="--", label="LBO-HKS")
-    ax2.plot(disp, df_rob["dmasif_standard_similarity"].values, marker="^", markersize=3.5, 
+    ax2.plot(disp, df_rob["dMaSIF"].values, marker="^", markersize=3.5, 
              color=TUFTE_PALETTE["ivfpq"], linestyle="-.", label="dMaSIF")
-    ax2.plot(disp, df_rob["euclidean_coords_similarity"].values, marker="x", markersize=3.5, 
+    ax2.plot(disp, df_rob["Euclidean"].values, marker="x", markersize=3.5, 
              color=TUFTE_PALETTE["baseline_gray"], linestyle=":", label="Euclidean")
 
     ax2.set_xlabel("Loop Displacement (A)", fontsize=8.5)
     ax2.set_ylabel("Similarity Retention", fontsize=8.5)
-    ax2.set_xlim(0.3, 4.3)
+    ax2.set_xlim(0.3, 6.3)
     ax2.set_ylim(-0.02, 1.05)
-    ax2.set_xticks([1.0, 2.0, 3.0, 4.0])
-    ax2.set_xticklabels(["1.0 A", "2.0 A", "3.0 A", "4.0 A"], fontsize=8.0)
+    ax2.set_xticks([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+    ax2.set_xticklabels(["1 A", "2 A", "3 A", "4 A", "5 A", "6 A"], fontsize=8.0)
     ax2.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax2.set_yticklabels(["0.0", "0.2", "0.4", "0.6", "0.8", "1.0"], fontsize=8.0)
     ax2.legend(frameon=False, fontsize=7.5, loc="center right", bbox_to_anchor=(0.98, 0.50), 
@@ -140,9 +140,9 @@ def plot_figure_02():
 
 def plot_figure_03():
     df = pd.read_csv(DATA_DIR / "patch_radius_sweep.csv")
-    r = df["patch_radius_angstrom"].values
-    recall = df["recall_at_10"].values
-    col = "mean_pocket_rmsd_angstrom" if "mean_pocket_rmsd_angstrom" in df.columns else "mean_rmsd_angstrom"
+    r = df["Patch_Radius"].values
+    recall = df["Recall@10"].values
+    col = "RMSD"
     rmsd = df[col].values
 
     fig, ax1 = plt.subplots(figsize=(5.4, 2.8))
@@ -157,21 +157,22 @@ def plot_figure_03():
     ax1.set_xlim(4.5, 15.5)
     ax1.set_xticks([5, 7, 9, 11, 13, 15])
     ax1.set_xticklabels(["5 A", "7 A", "9 A", "11 A", "13 A", "15 A"], fontsize=8.0)
-    ax1.set_ylim(70, 100)
-    ax1.set_yticks([70, 80, 90, 100])
-    ax1.set_yticklabels(["70%", "80%", "90%", "100%"], fontsize=8.0)
+    ax1.set_ylim(0, 100)
+    ax1.set_yticks([0, 20, 40, 60, 80, 100])
+    ax1.set_yticklabels(["0%", "20%", "40%", "60%", "80%", "100%"], fontsize=8.0)
 
     ax2 = ax1.twinx()
     ax2.plot(r, rmsd, marker="s", markersize=3.5, color=color_rmsd, linewidth=1.2, linestyle="--", label="RMSD (A)")
     ax2.set_ylabel("Pocket RMSD (A)", color=color_rmsd, fontsize=9.0)
     ax2.tick_params(axis="y", labelcolor=color_rmsd)
-    ax2.set_ylim(0.8, 2.6)
-    ax2.set_yticks([1.0, 1.5, 2.0, 2.5])
-    ax2.set_yticklabels(["1.0 A", "1.5 A", "2.0 A", "2.5 A"], fontsize=8.0)
+    ax2.set_ylim(0.0, 3.0)
+    ax2.set_yticks([0.0, 1.0, 2.0, 3.0])
+    ax2.set_yticklabels(["0.0 A", "1.0 A", "2.0 A", "3.0 A"], fontsize=8.0)
 
     for ax in [ax1, ax2]:
         ax.spines["top"].set_visible(False)
         ax.spines["bottom"].set_color(TUFTE_PALETTE["axis_ink"])
+        align_tufte_range_spines(ax)
 
     ax1.spines["left"].set_color(color_rec)
     ax2.spines["right"].set_color(color_rmsd)
@@ -201,8 +202,6 @@ def plot_figure_04():
 
     fig, ax = plt.subplots(figsize=(5.6, 2.9))
     ax.scatter(seq_id, sim, c=colors, s=24, alpha=0.85, edgecolors="none")
-    ax.axvline(20.0, color=TUFTE_PALETTE["hnsw"], linestyle="--", linewidth=0.85)
-    ax.axhline(0.80, color=TUFTE_PALETTE["baseline_gray"], linestyle=":", linewidth=0.8)
 
     legend_elements = [
         plt.Line2D([0], [0], marker="o", color="w", label="Twilight Zone (< 20%)",
@@ -334,9 +333,9 @@ def plot_figure_06():
     ax.set_xticks(x)
     ax.set_xticklabels(["Random 80/20", "Pfam Family", "CATH Fold"], fontsize=8.0)
     ax.set_ylabel("Retrieval Accuracy (%)", fontsize=8.5)
-    ax.set_ylim(60, 105)
-    ax.set_yticks([60, 70, 80, 90, 100])
-    ax.set_yticklabels(["60%", "70%", "80%", "90%", "100%"], fontsize=8.0)
+    ax.set_ylim(0, 105)
+    ax.set_yticks([0, 20, 40, 60, 80, 100])
+    ax.set_yticklabels(["0%", "20%", "40%", "60%", "80%", "100%"], fontsize=8.0)
     ax.legend(frameon=False, fontsize=7.5, loc="lower left", bbox_to_anchor=(0.0, 1.02), ncol=3, columnspacing=1.0)
     align_tufte_range_spines(ax)
 
@@ -387,8 +386,8 @@ def plot_figure_08():
     df_warm = df[df["cache_state"].str.contains("Warm")].copy()
 
     threads = df_warm["threads"].values
-    latency = df_warm["total_query_latency_ms"].values
-    throughput = df_warm["throughput_million_vec_per_s"].values
+    latency = df_warm["mean_ms"].values
+    throughput = df_warm["throughput_M_vec_s"].values
 
     fig, ax1 = plt.subplots(figsize=(5.6, 2.8))
     color_lat = TUFTE_PALETTE["hnsw"]
@@ -398,8 +397,10 @@ def plot_figure_08():
     ax1.set_xlabel("CPU Core Threads", fontsize=9.0)
     ax1.set_ylabel("Query Latency (ms)", color=color_lat, fontsize=9.0)
     ax1.tick_params(axis="y", labelcolor=color_lat)
+    ax1.set_xscale("log", base=2)
     ax1.set_xticks(threads)
-    ax1.set_xlim(0.5, 17)
+    ax1.set_xticklabels([str(t) for t in threads], fontsize=8.0)
+    ax1.set_xlim(0.8, 20)
 
     ax2 = ax1.twinx()
     ax2.plot(threads, throughput, marker="s", color=color_tp, linewidth=1.2, linestyle="--", label="Throughput (M vec/s)")

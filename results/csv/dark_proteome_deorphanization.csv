@@ -1,4 +1,2 @@
 uncharacterized_protein,discovered_structural_analog,inferred_pocket_function,pocket_rmsd_angstrom,alphapit_similarity,hypothesis_category,biological_rationale
-Q9Y6K9,P00533 (EGFR Kinase),ATP P-Loop Kinase Cavity,1.34,0.942,Putative Ser/Thr Kinase (In Silico Hypothesis),High steric overlap with canonical ATP adenine-binding hinge (Computational Annotation)
-Q05D32,P38272 (Alcohol Dehyd.),Rossmann NAD(P) Binding Pocket,1.41,0.917,Putative Dehydrogenase (In Silico Hypothesis),Conserved dinucleotide binding fold with invariant Gly-rich loop (Computational Annotation)
-Q9Y6R7,P20134 (Gastricsin),Aspartyl Protease Catalytic Dyad,1.48,0.895,Putative Hydrolase (In Silico Hypothesis),Twin Asp active site geometry embedded in non-homologous fold (Computational Annotation)
+Q9Y6K9,P00533 (EGFR Kinase),ATP P-Loop Kinase Cavity,1.34,0.942,Putative Ser/Thr Kinase (In Silico Hypothesis),High steric overlap with canonical ATP adenine-binding hinge

@@ -20,13 +20,13 @@ To eliminate strawman comparisons, all baseline implementations were configured 
 | **IVF1024, SQ8** | FAISS `IndexIVFScalarQuantizer` | $nlist = 1024$, $k$-means | $nprobe = 64$ | Voronoi + 8-bit scalar | 15.85 GB | 74.7% | 12.98 ms |
 | **IVF1024, PQ48** | FAISS `IndexIVFPQ` | $nlist = 1024$, $M = 48$ sub-quantizers | $nprobe = 64$ | Product quantization (48 B/vec) | 3.57 GB | 23.9% | 7.24 ms |
 | **IVF1024, PQ64** | FAISS `IndexIVFPQ` | $nlist = 1024$, $M = 64$ sub-quantizers | $nprobe = 64$ | Product quantization (64 B/vec) | 4.17 GB | 33.4% | 6.69 ms |
-| **PithosDB (Ours)** | Custom Rust / POSIX SIMD | Randomized Walsh-Hadamard | 2-Stage PolarQuant Cascade | 1-bit PolarQuant (8 B/vec) | **0.28 GB** | **94.6%** | **24.10 ms** |
+| **PithosDB (Ours)** | Custom Rust / POSIX SIMD | Randomized Walsh-Hadamard | 2-Stage PolarQuant Cascade | 1-bit PolarQuant (8 B/vec) | **0.28 GB** | **94.6%** | **27.10 ms** |
 
 ### 1.2 Memory Footprint & Trade-off Analysis (PQ Compression vs. Recall)
 
 - **In-Memory Graph Indices (HNSW-32):** In-memory HNSW achieves ultra-low search latency ($1.10\text{ ms}$) and high recall ($86.0\%$). However, it requires holding the entire uncompressed index and adjacency graph in resident RAM ($74.10\text{ GB}$). On resource-constrained hardware (e.g., standard laptops or fanless workstations with 16–32 GB RAM), graph indices trigger fatal operating system out-of-memory (OOM) errors or heavy swap page-thrashing.
 - **IVF-PQ Trade-offs ($nlist=1024, nprobe=64$):** Product quantization achieves extreme vector compression ($48\text{ B}$ and $64\text{ B}$ per vector, representing $24\times$ to $32\times$ compression over Float32). When searching complex, continuous 384-dimensional geometric manifolds, heavy sub-space projection distorts fine-grained angular metrics, resulting in $23.9\%$ (PQ48) and $33.4\%$ (PQ64) Recall@10 at $nprobe=64$. Expanding $nprobe$ increases recall but scales search latency linearly.
-- **PithosDB Zero-Copy Architecture:** PithosDB uses a 2-stage bit-sliced cascade with randomized Walsh-Hadamard sign-quantization. Tier 0 uses 64-bit SIMD Hamming distance filters (8 bytes per vector) resident in RAM ($0.28\text{ GB}$ working set). Higher-dimensional Matryoshka tiers and 3D atomic coordinates are mapped on-demand directly from fast NVMe storage (`/Volumes/AlphaPitData/pithos_indices`) via zero-copy POSIX `mmap()`, maintaining high biological recall ($94.6\%$) at a search latency of $24.10\text{ ms}$.
+- **PithosDB Zero-Copy Architecture:** PithosDB uses a 2-stage bit-sliced cascade with randomized Walsh-Hadamard sign-quantization. Tier 0 uses 64-bit SIMD Hamming distance filters (8 bytes per vector) mapped via zero-copy POSIX `mmap()`, maintaining a resident working set of just $0.28\text{ GB}$ (out of $0.31\text{ GB}$ total Tier-0 size on disk). Higher-dimensional Matryoshka tiers and 3D atomic coordinates are mapped on-demand directly from fast NVMe storage (`/Volumes/AlphaPitData/pithos_indices`) via zero-copy POSIX `mmap()`, maintaining high biological recall ($94.6\%$) at a total search latency of $27.10\text{ ms}$.
 
 ---
 
@@ -96,7 +96,7 @@ To ensure rigorous benchmarking against established structural bioinformatics to
 | **TM-align** | Dynamic Programming (Exact C-alpha) | 0.15 GB | 10.0 ms | 142.0 s | 42.5% |
 | **Foldseek** | 3Di Vector Alphabet + k-mer Matching | 6.80 GB | 0.05 ms | 0.012 s | 58.2% |
 | **dMaSIF + FAISS HNSW** | Extrinsic Point Convolutions (FP32) | 74.10 GB | 0.02 ms | 0.002 s | 78.4% |
-| **Pithos (Ours)** | LBO Manifold + 1-Bit PolarQuant | **0.28 GB** | **0.08 ms** | **0.024 s** | **94.6%** |
+| **Pithos (Ours)** | LBO Manifold + 1-Bit PolarQuant | **0.28 GB** | **0.08 ms** | **0.027 s** | **94.6%** |
 
 ---
 

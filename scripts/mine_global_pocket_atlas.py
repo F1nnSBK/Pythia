@@ -21,6 +21,21 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 import numpy as np
 
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import sys
+
+# Import shared Tufte style engine
+BASE_DIR = Path("/Users/finnhertsch/projects/writing")
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+try:
+    from shared.tufte_plots.style import apply_tufte_style, align_tufte_range_spines, TUFTE_PALETTE
+    apply_tufte_style()
+except ImportError:
+    pass
+
 import pithosdb
 from alphapit.config import settings
 from alphapit.storage.adapter import PithosStorageAdapter, SurfaceQueryResult
@@ -295,54 +310,42 @@ def render_universal_hubs_svg(csv_path: Path, output_svg: Path) -> Path:
         ("Tetrahedral Metallo-Ion Coordination Center", 1403),
         ("Unique Isolated Targets (Clean Pharma Sites)", 3375),
     ]
-
-    width, height = 780, 360
-    margin_l, margin_r, margin_t, margin_b = 290, 60, 45, 65
-    plot_w = width - margin_l - margin_r
-
-    svg_lines = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
-        f'<rect width="{width}" height="{height}" fill="#ffffff"/>',
-        f'<style>',
-        f'  text {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 11px; fill: #222222; }}',
-        f'  .axis-line {{ stroke: #333333; stroke-width: 1.0; stroke-linecap: square; }}',
-        f'  .grid-tick {{ stroke: #333333; stroke-width: 1.0; }}',
-        f'</style>',
-    ]
-
-    max_axis = 4500
-    bar_h = 26
-    spacing = 48
-
-    # Axis Lines
-    svg_lines.append(f'<line class="axis-line" x1="{margin_l}" y1="{margin_t}" x2="{margin_l}" y2="{margin_t + len(items) * spacing}"/>')
-    svg_lines.append(f'<line class="axis-line" x1="{margin_l}" y1="{margin_t + len(items) * spacing}" x2="{width - margin_r}" y2="{margin_t + len(items) * spacing}"/>')
-
-    # X-axis ticks (0, 1000, 2000, 3000, 4000)
-    for val in [0, 1000, 2000, 3000, 4000]:
-        x_val = margin_l + (val / max_axis) * plot_w
-        y_val = margin_t + len(items) * spacing
-        svg_lines.append(f'<line class="grid-tick" x1="{x_val}" y1="{y_val}" x2="{x_val}" y2="{y_val + 5}"/>')
-        svg_lines.append(f'<text x="{x_val}" y="{y_val + 18}" text-anchor="middle">{val:,}</text>')
-
-    # Bars & Labels
-    colors = ["#1e3a8a", "#0284c7", "#0d9488", "#ca8a04", "#64748b"]
-    for idx, (label, count) in enumerate(items):
-        y_top = margin_t + idx * spacing + 11
-        bar_w = max(4.0, (count / max_axis) * plot_w)
-        col = colors[idx % len(colors)]
-
-        svg_lines.append(f'<rect x="{margin_l}" y="{y_top}" width="{bar_w:.1f}" height="{bar_h}" fill="{col}"/>')
-        svg_lines.append(f'<text x="{margin_l - 12}" y="{y_top + 17}" text-anchor="end">{label}</text>')
-        svg_lines.append(f'<text x="{margin_l + bar_w + 8}" y="{y_top + 17}">{count:,} Pockets</text>')
-
-    svg_lines.append(f'<text x="{margin_l + plot_w / 2}" y="{height - 15}" text-anchor="middle" font-size="12">Frequency of Discovered Universal Binding Pocket Archetypes across 25,379 Proteomes</text>')
-    svg_lines.append('</svg>')
-
+    
+    labels = [item[0] for item in items]
+    counts = [item[1] for item in items]
+    
+    y_pos = np.arange(len(labels))
+    
+    fig, ax = plt.subplots(figsize=(7.8, 3.6))
+    colors = [TUFTE_PALETTE.get("hnsw", "#1e3a8a"), 
+              TUFTE_PALETTE.get("ivfpq", "#0284c7"), 
+              TUFTE_PALETTE.get("pithos", "#0d9488"), 
+              TUFTE_PALETTE.get("baseline_gray", "#ca8a04"), 
+              TUFTE_PALETTE.get("axis_ink", "#64748b")]
+              
+    ax.barh(y_pos, counts, height=0.45, color=colors, alpha=0.85)
+    
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(labels, fontsize=8.5)
+    ax.invert_yaxis()
+    
+    ax.set_xlabel("Frequency of Discovered Universal Binding Pocket Archetypes", fontsize=9.0)
+    ax.set_xlim(0, 4500)
+    ax.set_xticks([0, 1000, 2000, 3000, 4000])
+    ax.set_xticklabels(["0", "1,000", "2,000", "3,000", "4,000"], fontsize=8.0)
+    
+    # Apply Tufte spines
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_color(TUFTE_PALETTE.get("axis_ink", "#333333"))
+    ax.tick_params(axis="y", left=False)
+    
+    fig.tight_layout()
     output_svg.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_svg, "w", encoding="utf-8") as f:
-        f.write("\n".join(svg_lines))
-
+    fig.savefig(output_svg, format="svg")
+    plt.close(fig)
+    
     return output_svg
 
 

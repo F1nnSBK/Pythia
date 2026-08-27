@@ -1,0 +1,4 @@
+Split,Sequence Overlap (%),Pfam Overlap (%),CATH Overlap (%),PDB Overlap (%),Ligand Overlap (%),Pocket Overlap (%)
+Random 80/20,18.4,42.1,65.3,0.0,82.4,14.2
+Pfam-held-out,4.1,0.0,18.2,0.0,61.5,3.1
+CATH-held-out,0.0,0.0,0.0,0.0,42.8,0.0

@@ -1,0 +1,4 @@
+Query,Target,Type,Similarity,RMSD,Is_Match
+Subtilisin (1SBC),Chymotrypsin (4CHA),True Positive (Convergent Ser-His-Asp Triad),0.92,1.15,Yes
+Carbonic Anhydrase (1CA2),Zinc Protease (1ZPR),True Positive (Convergent Zn2+ Binding),0.88,1.45,Yes
+Kinase X (Mock),Lipase Y (Mock),"False Positive (High Geometric, inverted electrostatic)",0.86,2.1,No

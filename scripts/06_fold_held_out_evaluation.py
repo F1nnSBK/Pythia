@@ -4,6 +4,10 @@ Evaluates:
 - Random 80/20 Split
 - Pfam Family-Held-Out
 - CATH Fold-Held-Out
+
+Note: A retrieved pocket patch is scored as a true positive if its atomistic cavity 
+aligns with the query pocket at RMSD < 2.0 Å and shares a minimum binding-site residue 
+Jaccard index of J >= 0.5.
 """
 
 from __future__ import annotations

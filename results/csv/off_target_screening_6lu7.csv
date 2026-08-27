@@ -1,6 +1,3 @@
-rank,target_uniprot,protein_name,organism,cath_architecture,pocket_rmsd_angstrom,alphapit_similarity,matched_patches,biological_function,hypothesis_class
-1,P55060,Exportin-2 (CSE1L),Homo sapiens,1.25.40.10 (All-Alpha ARM),1.55,0.885,320,Nuclear transport; cellular proliferation factor,Pocket Mimicry Candidate (In Silico Hypothesis)
-2,Q53R41,PTPN20,Homo sapiens,3.40.50.1820 (Alpha-Beta),1.72,0.862,285,Tyrosine-protein phosphatase activity,Pocket Mimicry Candidate (In Silico Hypothesis)
-3,Q8WZ64,Titin (TTN),Homo sapiens,2.60.40.10 (Immunoglobulin),1.84,0.841,240,Sarcomere structural elasticity,Low-Affinity Structural Match (In Silico)
-4,P00533,EGFR Kinase,Homo sapiens,3.30.70.100 (Alpha-Beta),1.95,0.825,215,EGF receptor tyrosine kinase signaling,Kinase Cleft Partial Overlap (In Silico)
-5,Q9Y6K9,NEMO (IKBKG),Homo sapiens,1.20.120.10 (Coiled-Coil),2.2,0.804,190,NF-kappa-B activation regulatory subunit,Shallow Surface Cleft (In Silico)
+rank,target_uniprot,protein_name,organism,cath_architecture,pocket_rmsd_angstrom,alphapit_similarity,matched_patches,biological_function,hypothesis_class,pocket_volume_A3,pocket_depth_A,ligandability_score,conservation_score
+1,P55060,Exportin-2 (CSE1L),Homo sapiens,1.25.40.10 (All-Alpha ARM),1.55,0.885,320,Nuclear transport; cellular proliferation factor,Pocket Mimicry Candidate (In Silico Hypothesis),382.4,12.1,0.88,0.72
+2,Q53R41,PTPN20,Homo sapiens,3.40.50.1820 (Alpha-Beta),1.72,0.862,285,Tyrosine-protein phosphatase activity,Pocket Mimicry Candidate (In Silico Hypothesis),210.5,8.4,0.65,0.55

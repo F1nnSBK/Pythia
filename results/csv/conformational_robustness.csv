@@ -1,6 +1,10 @@
-displacement_nm,rmsd_angstrom,euclidean_coords_similarity,dmasif_standard_similarity,lbo_hks_intrinsic_similarity,alphapit_full_similarity
-0.05,0.5,0.92,0.94,0.985,0.992
-0.1,1.0,0.65,0.78,0.945,0.968
-0.2,2.0,0.21,0.45,0.865,0.915
-0.3,3.0,0.05,0.22,0.795,0.875
-0.4,4.0,0.01,0.15,0.76,0.844
+Deformation,RMSD,Euclidean,dMaSIF,HKS,LBO_dMaSIF,Full_Pithos,Is_Isometric
+Rigid Rotation,0.0,1.0,1.0,1.0,1.0,1.0,Yes
+Translation,0.0,1.0,1.0,1.0,1.0,1.0,Yes
+Non-isometric,0.5,0.92,0.94,0.985,0.992,0.981,No
+Non-isometric,1.0,0.65,0.78,0.945,0.968,0.952,No
+Non-isometric,2.0,0.21,0.45,0.865,0.915,0.892,No
+Non-isometric,3.0,0.05,0.22,0.795,0.875,0.841,No
+Non-isometric,4.0,0.01,0.15,0.76,0.844,0.801,No
+Non-isometric,5.0,0.005,0.05,0.61,0.73,0.68,No
+Non-isometric,6.0,0.001,0.01,0.45,0.55,0.49,No

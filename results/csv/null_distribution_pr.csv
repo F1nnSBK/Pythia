@@ -1,0 +1,8 @@
+Pair_Type,Mean_Similarity,Std_Similarity,Precision_at_0.80,Recall
+Random Pairs,0.185,0.112,0.002,1.0
+Same CATH Fold,0.415,0.201,0.124,0.85
+Diff CATH Fold,0.201,0.125,0.005,0.02
+Same Function,0.765,0.15,0.884,0.72
+Diff Function,0.21,0.13,0.008,0.04
+Homologous (>30%),0.895,0.08,0.985,0.94
+Non-Homologous (<20%),0.245,0.145,0.015,0.08

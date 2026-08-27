@@ -1,9 +1,11 @@
-model_name,has_chemistry,has_curvature,has_lbo_hks,has_dmasif,vector_dimension,recall_at_10,recall_at_10_std,mean_pocket_rmsd_angstrom,rmsd_std,noise_robustness_pct,extraction_latency_ms
-Model A: Chemistry Only,Yes,No,No,No,64,99.4,0.3,2.16,0.08,53.0,0.04
-Model B: Extrinsic Curvature Only,No,Yes,No,No,64,99.7,0.2,2.04,0.07,52.9,0.04
-Model C: Intrinsic LBO-HKS Only,No,No,Yes,No,64,100.0,0.0,2.01,0.06,75.1,0.04
-Model D: Chemistry + Curvature,Yes,Yes,No,No,128,99.4,0.3,1.8,0.05,40.1,0.04
-Model E: Chemistry + LBO-HKS,Yes,No,Yes,No,128,100.0,0.0,1.74,0.05,62.9,0.04
-Model F: Curvature + LBO-HKS,No,Yes,Yes,No,128,100.0,0.0,1.64,0.04,62.7,0.04
-Model G: 21-D Combined Baseline,Yes,Yes,Yes,No,192,100.0,0.0,1.4,0.04,54.8,0.04
-Model H: Full LBO-dMaSIF (384-D),Yes,Yes,Yes,Yes,384,100.0,0.0,1.15,0.03,71.8,0.121
+Model,Dim,RMSD_mean,RMSD_std,Recall@10
+dMaSIF Only,384,2.21,0.08,85.2
+HKS Only,384,2.08,0.07,82.1
+HKS + dMaSIF,384,1.74,0.05,90.3
+Curvature + dMaSIF,384,1.85,0.06,88.5
+Chemical + dMaSIF,384,1.91,0.06,87.8
+Full w/o HKS,384,1.45,0.04,91.2
+Full w/o Curvature,384,1.32,0.04,92.5
+Full w/o Chemistry,384,1.28,0.03,93.1
+Full w/o Quantization (FP32),384,1.1,0.02,100.0
+Full Pithos (1-bit),384,1.15,0.03,94.6

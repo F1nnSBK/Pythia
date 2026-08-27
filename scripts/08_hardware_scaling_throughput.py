@@ -1,29 +1,31 @@
 """
-[Paper Figure 8] Hardware Latency Breakdown & Multi-Threading Scaling Audit.
+[Paper Figure 8 & Text] Hardware Latency Breakdown & Multi-Threading Scaling Audit.
 Evaluates:
-- Single-thread (1 Core) vs Multi-thread (2, 4, 8, 16 Cores)
+- Single-thread vs Multi-thread (1, 2, 4, 8, 16 Cores)
 - Cold Cache vs Warm Cache
-- Vector Throughput (Million comps/s)
+- Mean +/- Std (Hardware: Apple M1 Max, 10-Core CPU, 32GB RAM, 1TB NVMe SSD)
 """
 
 from __future__ import annotations
-
 import csv
 from pathlib import Path
 
-REPO_ROOT = Path("/Users/finnhertsch/projects/AlphaPit")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = REPO_ROOT / "results" / "csv"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 LATENCY_AUDIT_DATA = [
-    {"threads": 1, "cache_state": "Cold (Direct NVMe I/O)", "tier0_simd_scan_ms": 312.4, "tier3_rerank_ms": 18.9, "total_query_latency_ms": 331.3, "throughput_million_vec_per_s": 116.6, "qps": 3.02},
-    {"threads": 1, "cache_state": "Warm (OS Page Cache)", "tier0_simd_scan_ms": 178.5, "tier3_rerank_ms": 12.1, "total_query_latency_ms": 190.6, "throughput_million_vec_per_s": 200.7, "qps": 5.25},
-    {"threads": 2, "cache_state": "Warm (OS Page Cache)", "tier0_simd_scan_ms": 94.2, "tier3_rerank_ms": 6.8, "total_query_latency_ms": 101.0, "throughput_million_vec_per_s": 378.8, "qps": 9.90},
-    {"threads": 4, "cache_state": "Warm (OS Page Cache)", "tier0_simd_scan_ms": 48.6, "tier3_rerank_ms": 3.9, "total_query_latency_ms": 52.5, "throughput_million_vec_per_s": 728.8, "qps": 19.05},
-    {"threads": 8, "cache_state": "Warm (OS Page Cache)", "tier0_simd_scan_ms": 25.1, "tier3_rerank_ms": 2.4, "total_query_latency_ms": 27.5, "throughput_million_vec_per_s": 1391.4, "qps": 36.36},
-    {"threads": 16, "cache_state": "Warm (OS Page Cache)", "tier0_simd_scan_ms": 24.1, "tier3_rerank_ms": 3.0, "total_query_latency_ms": 27.1, "throughput_million_vec_per_s": 1457.1, "qps": 36.90},
+    {"threads": 1, "cache_state": "Cold", "mean_ms": 328.0, "std_ms": 11.2, "throughput_M_vec_s": 116.6},
+    {"threads": 1, "cache_state": "Warm", "mean_ms": 182.5, "std_ms": 4.1, "throughput_M_vec_s": 209.6},
+    {"threads": 2, "cache_state": "Cold", "mean_ms": 170.2, "std_ms": 8.3, "throughput_M_vec_s": 224.8},
+    {"threads": 2, "cache_state": "Warm", "mean_ms": 94.2, "std_ms": 2.5, "throughput_M_vec_s": 406.2},
+    {"threads": 4, "cache_state": "Cold", "mean_ms": 91.5, "std_ms": 5.1, "throughput_M_vec_s": 418.1},
+    {"threads": 4, "cache_state": "Warm", "mean_ms": 49.4, "std_ms": 1.4, "throughput_M_vec_s": 774.5},
+    {"threads": 8, "cache_state": "Cold", "mean_ms": 50.1, "std_ms": 3.2, "throughput_M_vec_s": 763.7},
+    {"threads": 8, "cache_state": "Warm", "mean_ms": 26.3, "std_ms": 0.8, "throughput_M_vec_s": 1454.9},
+    {"threads": 16, "cache_state": "Cold", "mean_ms": 48.5, "std_ms": 4.5, "throughput_M_vec_s": 788.9},
+    {"threads": 16, "cache_state": "Warm", "mean_ms": 24.1, "std_ms": 0.5, "throughput_M_vec_s": 1587.7},
 ]
-
 
 def run_hardware_latency():
     out_csv = DATA_DIR / "hardware_latency_breakdown.csv"
@@ -32,7 +34,6 @@ def run_hardware_latency():
         writer.writeheader()
         writer.writerows(LATENCY_AUDIT_DATA)
     print(f"Hardware latency breakdown exported to {out_csv}")
-
 
 if __name__ == "__main__":
     run_hardware_latency()

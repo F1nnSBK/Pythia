@@ -1,0 +1,2 @@
+query_uniprot,query_gene,target_uniprot,target_gene,global_rmsd_angstrom,pocket_similarity_score,chemical_environment_match,electrostatic_correlation,false_positive_reason
+P12345,Kinase_X,Q98765,Lipase_Y,2.1,0.86,Failed,-0.15,High geometric similarity but inverted electrostatic potential
