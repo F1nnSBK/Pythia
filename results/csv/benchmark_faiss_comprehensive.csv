@@ -1,8 +1,8 @@
 engine,category,index_type,quantization,bytes_per_vector,resident_ram_gb,storage_size_gb,latency_ms,latency_ms_std,recall_at_10,requires_training,mmap_support,Index_Build_Time_s,Preprocessing_Feature_Time_s
-FAISS Flat (Exact),FAISS,Flat,None,1536.0,57.47,54.74,192.92,9.6,100.0,No,No,3.1,3045.5
-FAISS HNSW-32,FAISS,HNSW32,Graph,1808.3,74.1,64.44,1.08,0.1,85.9,No,No,1823.9,3045.5
-FAISS SQ8,FAISS,SQ8,8-Bit Uniform,384.1,14.37,13.69,235.43,11.8,98.7,No,No,9.4,3045.5
-"FAISS IVF,SQ8",FAISS,"IVF1024,SQ8",Inverted File,423.7,15.85,15.1,11.87,0.6,74.7,No,Partial,494.7,3045.5
-"FAISS IVF,PQ48",FAISS,"IVF1024,PQ48",PQ48,95.5,3.57,3.4,5.75,0.3,23.9,No,Partial,13924.0,3045.5
-"FAISS IVF,PQ64",FAISS,"IVF1024,PQ64",PQ64,111.5,4.17,3.97,6.38,0.3,33.4,No,Partial,19814.2,3045.5
+FAISS Flat (Exact),FAISS,Flat,None,1536.0,57.47,54.74,212.83,10.6,100.0,No,No,1.9,3045.5
+FAISS HNSW-32,FAISS,HNSW32,Graph,1808.3,74.1,64.44,1.16,0.1,87.4,No,No,1892.9,3045.5
+FAISS SQ8,FAISS,SQ8,8-Bit Uniform,384.1,14.37,13.69,236.75,11.8,98.7,No,No,10.3,3045.5
+"FAISS IVF,SQ8",FAISS,"IVF1024,SQ8",Inverted File,423.7,15.85,15.1,13.75,0.7,74.7,No,Partial,508.2,3045.5
+"FAISS IVF,PQ48",FAISS,"IVF1024,PQ48",PQ48,95.5,3.57,3.4,5.51,0.3,23.9,No,Partial,14054.4,3045.5
+"FAISS IVF,PQ64",FAISS,"IVF1024,PQ64",PQ64,111.5,4.17,3.97,6.27,0.3,33.4,No,Partial,21019.7,3045.5
 Pithos (Ours),Pithos,2-Stage PolarQuant,1-Bit Hadamard,8.0,0.28,15.88,27.1,1.4,94.6,No,Native mmap,120.0,3045.5
