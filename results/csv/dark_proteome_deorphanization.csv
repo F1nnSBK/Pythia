@@ -1,2 +1,2 @@
-uncharacterized_protein,discovered_structural_analog,inferred_pocket_function,pocket_rmsd_angstrom,alphapit_similarity,hypothesis_category,biological_rationale
+uncharacterized_protein,discovered_structural_analog,inferred_pocket_function,pocket_rmsd_angstrom,pythia_similarity,hypothesis_category,biological_rationale
 Q9Y6K9,P00533 (EGFR Kinase),ATP P-Loop Kinase Cavity,1.34,0.942,Putative Ser/Thr Kinase (In Silico Hypothesis),High steric overlap with canonical ATP adenine-binding hinge

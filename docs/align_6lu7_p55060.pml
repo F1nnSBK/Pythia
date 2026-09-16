@@ -9,8 +9,8 @@ set ray_shadows, 0
 set light_count, 2
 set spec_reflect, 0.15
 
-load /Users/finnhertsch/projects/AlphaPit/data/structures/6lu7.pdb, viral_mpro_6lu7
-load /Users/finnhertsch/projects/AlphaPit/data/structures/AF-P55060-F1-model_v4.pdb, human_target_p55060
+load /Users/finnhertsch/projects/Pythia/data/structures/6lu7.pdb, viral_mpro_6lu7
+load /Users/finnhertsch/projects/Pythia/data/structures/AF-P55060-F1-model_v4.pdb, human_target_p55060
 
 hide everything
 show cartoon, viral_mpro_6lu7
@@ -33,11 +33,11 @@ set stick_radius, 0.24
 zoom all, 3
 orient
 ray 1800, 1350
-png /Users/finnhertsch/projects/AlphaPit/docs/temp_05_global.png, dpi=300
+png /Users/finnhertsch/projects/Pythia/docs/temp_05_global.png, dpi=300
 
 zoom mpro_pocket, 13
 orient mpro_pocket
 ray 1800, 1350
-png /Users/finnhertsch/projects/AlphaPit/docs/temp_05_pocket.png, dpi=300
+png /Users/finnhertsch/projects/Pythia/docs/temp_05_pocket.png, dpi=300
 
-save /Users/finnhertsch/projects/AlphaPit/docs/6lu7_p55060_alignment.pse
+save /Users/finnhertsch/projects/Pythia/docs/6lu7_p55060_alignment.pse

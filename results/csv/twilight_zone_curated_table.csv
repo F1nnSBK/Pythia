@@ -1,3 +1,3 @@
-query_uniprot,query_gene,target_uniprot,target_gene,species_pair,sequence_identity,blast_e_value,alphapit_similarity,pocket_rmsd_angstrom,catalytic_residue_overlap_pct,query_cath_fold,target_cath_fold,ligand_class
+query_uniprot,query_gene,target_uniprot,target_gene,species_pair,sequence_identity,blast_e_value,pythia_similarity,pocket_rmsd_angstrom,catalytic_residue_overlap_pct,query_cath_fold,target_cath_fold,ligand_class
 P00533,EGFR,P55060,CSE1L,Human <-> Human,0.148,4.8,0.894,1.42,82.5,3.30.70.100 (Alpha-Beta),1.25.40.10 (All-Alpha ARM),ATP / Small Molecule Kinase Inhibitor
 6LU7:A,Mpro,P55060,CSE1L,Virus <-> Human,0.112,9.2,0.885,1.55,78.0,2.40.10.10 (Beta-Barrel),1.25.40.10 (All-Alpha ARM),Peptidomimetic / Covalent Inhibitor
